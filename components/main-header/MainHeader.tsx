@@ -3,7 +3,7 @@ import Image from "next/image";
 import React from 'react';
 
 import logoImg from "@/assets/logo.png";
-import classes from "./main-header.module.css";
+import classes from "./MainHeader.module.css";
 import MainHeaderBackground from "./MainHeaderBackground";
 import NavLink from "./NavLink";
 

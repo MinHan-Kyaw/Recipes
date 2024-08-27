@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 
 import classes from "./page.module.css";
-import MealsGrid from "@/components/meals/meals-grid";
+import MealsGrid from "@/components/meals/MealsGrid";
 import { getMeals } from "@/lib/utils/meals";
 
 export const metadata = {

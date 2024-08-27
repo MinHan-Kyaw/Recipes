@@ -1,10 +1,10 @@
 "use client";
 
 import { useForm } from "react-hook-form";
-import ImagePicker from "@/components/meals/image-picker";
+import ImagePicker from "@/components/meals/ImagePicker";
 import classes from "./page.module.css";
-import { shareMeal } from "@/lib/actions";
-import MealsFormSubmit from "@/components/meals/meals-form-submit";
+import { shareMeal } from "@/lib/utils/actions";
+import MealsFormSubmit from "@/components/meals/MealsFormSubmit";
 
 // Define your form data types
 interface FormValues {

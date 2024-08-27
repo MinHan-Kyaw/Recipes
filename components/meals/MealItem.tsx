@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import classes from "./meal-item.module.css";
+import classes from "./MealItem.module.css";
 
 interface MealItemProps {
   title: string;

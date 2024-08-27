@@ -1,5 +1,5 @@
 import MealItem from "./MealItem";
-import classes from "./meals-grid.module.css";
+import classes from "./MealsGrid.module.css";
 
 export default function MealsGrid({ meals }: { meals: any[] }) {
 console.log(meals);

@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import classes from "./image-picker.module.css";
+import classes from "./ImagePicker.module.css";
 import Image from "next/image";
 
 interface ImagePickerProps {

@@ -2,7 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import classes from "./nav-link.module.css";
+import classes from "./NavLink.module.css";
 
 interface NavLinkProps {
   href: string;
