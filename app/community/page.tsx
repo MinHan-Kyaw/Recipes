@@ -1,3 +1,5 @@
+import React from "react"; // Import the React library
+
 import Image from "next/image";
 
 import mealIcon from "@/assets/icons/meal.png";
@@ -12,7 +14,7 @@ export default function CommunityPage() {
         <h1>
           One shared passion: <span className={classes.highlight}>Food</span>
         </h1>
-        <p>Join our community and share your favorite recipes!</p>
+        {React.createElement("p", null, "Join our community and share your favorite recipes!")}
       </header>
       <main className={classes.main}>
         <h2>Community Perks</h2>

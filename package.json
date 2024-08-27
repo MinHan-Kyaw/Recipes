@@ -13,11 +13,17 @@
     "next": "14.0.3",
     "react": "^18",
     "react-dom": "^18",
+    "react-hook-form": "^7.52.2",
     "slugify": "^1.6.6",
     "xss": "^1.0.15"
   },
   "devDependencies": {
+    "@types/better-sqlite3": "^7.6.11",
+    "@types/node": "^22.4.1",
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
     "eslint": "^8",
-    "eslint-config-next": "14.0.3"
+    "eslint-config-next": "14.0.3",
+    "typescript": "^5.5.4"
   }
 }

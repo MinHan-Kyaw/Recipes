@@ -4,16 +4,25 @@ import { useRef, useState } from "react";
 import classes from "./image-picker.module.css";
 import Image from "next/image";
 
-export default function ImagePicker({ label, name }) {
-  const [pickedImage, setPickedImage] = useState();
-  const imageInput = useRef();
+interface ImagePickerProps {
+  label: string;
+  name: string;
+}
+
+export default function ImagePicker({ label, name }: ImagePickerProps) {
+  const [pickedImage, setPickedImage] = useState<string | ArrayBuffer | null>(
+    null
+  );
+  const imageInput = useRef<HTMLInputElement>(null);
 
   function handlePickClick() {
-    imageInput.current.click();
+    if (imageInput.current) {
+      imageInput.current.click();
+    }
   }
 
-  function handleImageChange(event) {
-    const file = event.target.files[0];
+  function handleImageChange(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
 
     if (!file) {
       setPickedImage(null);
@@ -35,7 +44,7 @@ export default function ImagePicker({ label, name }) {
           {!pickedImage && <p>No image picked yet.</p>}
           {pickedImage && (
             <Image
-              src={pickedImage}
+              src={pickedImage as string}
               alt="The image selected by the user."
               fill
             />

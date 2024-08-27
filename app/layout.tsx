@@ -1,13 +1,13 @@
 import MainHeader from "@/components/main-header/main-header";
+import { ReactNode } from "react";
 import "./globals.css";
-import MainHeaderBackground from "@/components/main-header/main-header-background";
 
 export const metadata = {
   title: "NextLevel Food",
   description: "Delicious meals, shared by a food-loving community.",
 };
 
-export default function RootLayout({ children }) {
+export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
       <body>

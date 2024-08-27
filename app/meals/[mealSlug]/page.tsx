@@ -1,10 +1,17 @@
 import Image from "next/image";
 import { notFound } from "next/navigation";
-
-import { getMeal } from "@/lib/meals";
+import { getMeal } from "@/lib/utils/meals"; // Ensure this path is correct
 import classes from "./page.module.css";
 
-export async function generateMetadata({ params }) {
+interface MealParams {
+  mealSlug: string;
+}
+
+interface GenerateMetadataParams {
+  params: MealParams;
+}
+
+export async function generateMetadata({ params }: GenerateMetadataParams) {
   const meal = getMeal(params.mealSlug);
   if (!meal) {
     notFound();
@@ -15,8 +22,15 @@ export async function generateMetadata({ params }) {
   };
 }
 
-export default function MealDetailsPage({ params }) {
+interface MealDetailsPageProps {
+  params: MealParams;
+}
+
+export default function MealDetailsPage({ params }: MealDetailsPageProps) {
   const meal = getMeal(params.mealSlug);
+  if (!meal) {
+    return <div>Meal not found</div>;
+  }
 
   meal.instructions = meal.instructions.replace(/\n/g, "<br>");
 
@@ -24,7 +38,12 @@ export default function MealDetailsPage({ params }) {
     <>
       <header className={classes.header}>
         <div className={classes.image}>
-          <Image src={meal.image} alt={meal.title} fill />
+          <Image
+            src={meal.image}
+            alt={meal.title}
+            fill
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" // Adjust sizes as needed
+          />
         </div>
         <div className={classes.headerText}>
           <h1>{meal.title}</h1>

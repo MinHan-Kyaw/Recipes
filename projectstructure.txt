@@ -1,0 +1,46 @@
+Project 
+-app
+   -community
+      page.tsx 
+   -meals
+      -[mealSlug]
+         page.tsx
+      -share
+         error.tsx
+         page.tsx
+      loading-out.tsx
+      not-found.tsx
+      page.tsx
+   error.tsx 
+   global.css 
+   icon.png 
+   layout.tsx 
+   not-found.tsx
+   page.module.css
+   page.tsx
+-assets
+   -icons
+      community.png
+      event.png
+      meal.png
+   burger.jpg
+   curry.jpg
+-components
+   -images
+      image-slideshow.tsx
+   -main-header
+      main-header.background.tsx
+      main-header.tsx
+      nav-link.tsx
+   -meals
+      image-picker.tsx
+      meal-item.tsx
+      meals-form-submit.tsx
+      meals-grid.tsx 
+-lib
+   actions.ts
+   meals.ts
+-public
+   -images
+      burger.jpg
+      curry.jpg

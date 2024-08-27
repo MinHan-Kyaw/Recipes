@@ -33,8 +33,10 @@
   }
   
   .image {
-    position: relative;
-    height: 15rem;
+    position: relative; /* Needed for the fill layout to work correctly */
+    width: 100%; /* Set the desired width */
+    height: 300px; /* Set the desired height */
+    overflow: hidden; /* Prevent overflow */
   }
   
   .meal img {

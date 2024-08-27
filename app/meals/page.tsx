@@ -3,7 +3,7 @@ import { Suspense } from "react";
 
 import classes from "./page.module.css";
 import MealsGrid from "@/components/meals/meals-grid";
-import { getMeals } from "@/lib/meals";
+import { getMeals } from "@/lib/utils/meals";
 
 export const metadata = {
   title: "All Meals",
