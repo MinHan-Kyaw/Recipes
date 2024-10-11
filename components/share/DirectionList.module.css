@@ -1,0 +1,73 @@
+.directionList {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    width: 100%;
+  }
+  
+  .directionItem {
+    display: flex;
+    gap: 0.5rem;
+    align-items: flex-start;
+    position: relative;
+  }
+  
+  .directionItem textarea {
+    flex: 1;
+    min-height: 80px;
+    padding: 0.75rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.375rem;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    resize: vertical;
+  }
+  
+  .directionItem textarea:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 1px #3b82f6;
+  }
+  
+  .directionItem textarea::placeholder {
+    color: #94a3b8;
+  }
+  
+  .removeButton {
+    background: none;
+    border: none;
+    padding: 0.25rem;
+    color: #94a3b8;
+    cursor: pointer;
+    position: absolute;
+    right: 0.5rem;
+    top: 0.5rem;
+  }
+  
+  .removeButton:hover {
+    color: #ef4444;
+  }
+  
+  .addButton {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.5rem 1rem;
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.375rem;
+    color: #64748b;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    width: fit-content;
+  }
+  
+  .addButton:hover {
+    background: #f8fafc;
+  }
+  
+  .addButton::before {
+    content: "+";
+    margin-right: 0.5rem;
+    font-size: 1rem;
+  }
