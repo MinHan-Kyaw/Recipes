@@ -3,7 +3,7 @@
     margin: 3rem auto 5rem auto;
     width: 90%;
     max-width: 75rem;
-    color: #ddd6cb;
+    color: #2e8b57;
     font-size: 1.5rem;
   }
   
@@ -12,7 +12,7 @@
   }
   
   .highlight {
-    background: linear-gradient(90deg, #f9572a, #ff8a05);
+    background: #daa520; 
     background-clip: text;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -27,10 +27,14 @@
     margin-top: 1rem;
     padding: 0.5rem 1rem;
     border-radius: 0.5rem;
-    background: linear-gradient(90deg, #f9572a, #ff9b05);
+    background: #daa520;
     color: #ffffff;
     font-weight: bold;
     text-decoration: none;
+  }
+
+  .cta a:hover {
+    background: #b8860b;  /* Darker gold on hover */
   }
   
   .loading {

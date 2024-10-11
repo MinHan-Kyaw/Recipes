@@ -1,24 +1,24 @@
-  
-.link{
-    text-decoration: none;
-    color: #ddd6cb;
-    font-weight: bold;
-    padding: 0.5rem 1rem;
-    border-radius: 0.5rem;
-  }
-  
+.link {
+  text-decoration: none;
+  color: #2e8b57; /* Dark green to match the background start color */
+  font-weight: bold;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  transition: all 0.3s ease;
+}
+
 .link:hover,
 .link:active {
-    background: linear-gradient(90deg, #ff8a05, #f9b331);
-    background-clip: text;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    text-shadow: 0 0 18px rgba(248, 190, 42, 0.8);
-  }
-  
+  background: linear-gradient(90deg, #4caf50, #daa520);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0 0 18px rgba(218, 165, 32, 0.6);
+}
+
 .active {
-    background: linear-gradient(90deg, #ff8a05, #f9b331);
-    background-clip: text;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-  }
+  background: linear-gradient(90deg, #4caf50, #daa520);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}

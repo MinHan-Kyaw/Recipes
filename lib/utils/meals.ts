@@ -6,25 +6,27 @@ import xss from "xss";
 
 const db = sql("meals.db");
 
-// Define the Meal type
 export interface Meal {
+  id: string;
   title: string;
   summary: string;
   instructions: string;
   image: string;
   creator: string;
   creator_email: string;
-  slug?: string; // Optional, since it is generated
+  slug: string;
 }
 
 export async function getMeals(): Promise<Meal[]> {
   await new Promise((resolve) => setTimeout(resolve, 2000));
   //   throw new Error("Loading meals failed");
-  return db.prepare("SELECT * FROM meals").all()as Meal[];
+  return db.prepare("SELECT * FROM meals").all() as Meal[];
 }
 
-export function getMeal(slug: string): Meal | undefined { 
-  return db.prepare("SELECT * FROM meals WHERE slug = ?").get(slug) as Meal | undefined;
+export function getMeal(slug: string): Meal | undefined {
+  return db.prepare("SELECT * FROM meals WHERE slug = ?").get(slug) as
+    | Meal
+    | undefined;
 }
 
 export async function saveMeal(meal: any) {

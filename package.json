@@ -10,9 +10,10 @@
   },
   "dependencies": {
     "better-sqlite3": "^11.1.2",
+    "framer-motion": "^11.3.30",
     "next": "14.0.3",
-    "react": "^18",
-    "react-dom": "^18",
+    "react": "18",
+    "react-dom": "18",
     "react-hook-form": "^7.52.2",
     "slugify": "^1.6.6",
     "xss": "^1.0.15"

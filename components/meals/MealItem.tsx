@@ -1,4 +1,7 @@
-import Link from "next/link";
+"use client";
+
+import { motion } from "framer-motion";
+import { useRouter } from "next/navigation";
 import Image from "next/image";
 import classes from "./MealItem.module.css";
 
@@ -17,17 +20,32 @@ export default function MealItem({
   summary,
   creator,
 }: MealItemProps) {
+  const router = useRouter();
+  const handleClick = () => {
+    router.push(`/meals/${slug}`);
+  };
+
   return (
-    <article className={classes.meal}>
+    <motion.article
+      className={classes.meal}
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 0.5 }}
+      onClick={handleClick}
+    >
       <header>
-        <div className={classes.image}>
+        <motion.div
+          className={classes.image}
+          whileHover={{ scale: 1.1 }}
+          transition={{ duration: 0.3 }}
+        >
           <Image
             src={image}
             alt={title}
             fill
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" // Adjust sizes as needed
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
           />
-        </div>
+        </motion.div>
         <div className={classes.headerText}>
           <h2>{title}</h2>
           <p>by {creator}</p>
@@ -36,9 +54,24 @@ export default function MealItem({
       <div className={classes.content}>
         <p className={classes.summary}>{summary}</p>
         <div className={classes.actions}>
-          <Link href={`/meals/${slug}`}>View Details</Link>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className={classes.iconclock}
+          >
+            <circle cx="12" cy="12" r="10" />
+            <polyline points="12 6 12 12 16 14" />
+          </svg>
+          <span>40 mins</span>
         </div>
       </div>
-    </article>
+    </motion.article>
   );
 }

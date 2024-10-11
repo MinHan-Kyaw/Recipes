@@ -1,77 +1,96 @@
 .meal {
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    height: 100%;
-    border-radius: 4px;
-    box-shadow: 0 0 12px rgba(0, 0, 0, 0.3);
-    overflow: hidden;
-    transition: all 0.3s ease-in-out;
-    color: #ddd6cb;
-    background: linear-gradient(90deg, #2c1e19, #25200f);
-  }
-  
-  .headerText {
-    padding: 0.5rem 1rem 0 1rem;
-  }
-  
-  .headerText h2 {
-    margin: 0;
-    font-size: 1.5rem;
-    font-family: 'Montserrat', sans-serif;
-  }
-  
-  .headerText p {
-    font-size: 0.75rem;
-    color: #cfa69b;
-    font-style: italic;
-  }
-  
-  .meal h2,
-  .meal p {
-    margin: 0;
-  }
-  
-  .image {
-    position: relative; /* Needed for the fill layout to work correctly */
-    width: 100%; /* Set the desired width */
-    height: 300px; /* Set the desired height */
-    overflow: hidden; /* Prevent overflow */
-  }
-  
-  .meal img {
-    object-fit: cover;
-  }
-  
-  .content {
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    height: 100%;
-  }
-  
-  .summary {
-    padding: 1rem 1rem 0 1rem;
-  }
-  
-  .actions {
-    padding: 1rem;
-    text-align: right;
-  }
-  
-  .actions a {
-    display: inline-block;
-    margin-top: 1rem;
-    padding: 0.5rem 1rem;
-    border-radius: 0.5rem;
-    background: linear-gradient(90deg, #f9572a, #ff9b05);
-    color: #ffffff;
-    font-weight: bold;
-    text-decoration: none;
-  }
-  
-  .actions a:hover,
-  .actions a:active {
-    background: linear-gradient(90deg, #fd4715, #f9b241);
-    box-shadow: 0 0 12px rgba(242, 100, 18, 0.8);
-  }
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100%;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  transition: all 0.3s ease-in-out;
+  background: #ffffff;
+  color: #333333;
+}
+
+.meal:hover {
+  box-shadow: 0 6px 12px rgba(46, 139, 87, 0.2);
+  transform: translateY(-5px);
+}
+
+.headerText {
+  padding: 1rem 1rem 0.5rem 1rem;
+}
+
+.headerText h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-family: 'Montserrat', sans-serif;
+  color: #2e8b57;
+}
+
+.headerText p {
+  font-size: 0.875rem;
+  color: #666666;
+  font-style: italic;
+}
+
+.image {
+  position: relative;
+  width: 100%;
+  height: 200px;
+  overflow: hidden;
+}
+
+.meal img {
+  object-fit: cover;
+  transition: transform 0.3s ease-in-out;
+}
+
+.meal:hover img {
+  transform: scale(1.05);
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100%;
+}
+
+.summary {
+  padding: 0rem 1rem;
+  font-size: 1rem;
+  /* line-height: 1.5; */
+  color: #555555;
+}
+
+.actions {
+  padding: 1rem;
+  text-align: left;
+  display: flex;
+  align-items: center;
+  color: #2e8b57;
+}
+
+.iconclock {
+  margin-right: 8px;
+  vertical-align: middle;
+}
+
+.actions a {
+  display: inline-block;
+  margin-top: 1rem;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  background: linear-gradient(90deg, #2e8b57, #daa520);
+  color: #ffffff;
+  font-weight: bold;
+  text-decoration: none;
+  transition: all 0.3s ease-in-out;
+}
+
+.actions a:hover,
+.actions a:active {
+  background: linear-gradient(90deg, #26734a, #c69500);
+  box-shadow: 0 0 12px rgba(46, 139, 87, 0.4);
+}
