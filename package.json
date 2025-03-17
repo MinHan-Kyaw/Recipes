@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "predev": "source ~/.nvm/nvm.sh && nvm use 23",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",

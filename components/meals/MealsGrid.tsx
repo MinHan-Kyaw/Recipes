@@ -1,4 +1,3 @@
-import classes from "./MealsGrid.module.css";
 import MealItem from "./MealItem";
 import MealLoadingSkeleton from "./MealLoadingSkeleton";
 import { Meal } from "@/lib/utils/meals";
@@ -9,9 +8,11 @@ interface MealsGridProps {
 }
 
 export default function MealsGrid({ meals, loading = false }: MealsGridProps) {
+  const gridClasses =
+    "w-[90%] max-w-[90rem] grid grid-cols-[repeat(auto-fill,minmax(15rem,1fr))] gap-8 mx-auto my-8 list-none p-0";
   if (loading) {
     return (
-      <ul className={classes.meals}>
+      <ul className={gridClasses}>
         {[...Array(6)].map((_, index) => (
           <li key={index}>
             <MealLoadingSkeleton />
@@ -22,7 +23,7 @@ export default function MealsGrid({ meals, loading = false }: MealsGridProps) {
   }
 
   return (
-    <ul className={classes.meals}>
+    <ul className={gridClasses}>
       {meals.map((meal) => (
         <li key={meal.id}>
           <MealItem {...meal} />

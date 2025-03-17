@@ -1,10 +1,13 @@
 import React from "react";
-import classes from "./MainHeaderBackground.module.css";
 
 export default function MainHeaderBackground() {
   return (
-    <div className={classes["header-background"]}>
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320">
+    <div className="absolute w-full h-80 top-0 left-0 -z-10">
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 1440 320"
+        className="block w-full h-auto"
+      >
         <defs>
           <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
             <stop

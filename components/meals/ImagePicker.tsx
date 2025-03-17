@@ -1,7 +1,6 @@
 "use client";
 
 import { useRef, useState } from "react";
-import classes from "./ImagePicker.module.css";
 import Image from "next/image";
 
 interface ImagePickerProps {
@@ -37,21 +36,22 @@ export default function ImagePicker({ label, name }: ImagePickerProps) {
   }
 
   return (
-    <div className={classes.picker}>
+    <div>
       <label htmlFor={name}>{label}</label>
-      <div className={classes.controls}>
-        <div className={classes.preview}>
-          {!pickedImage && <p>No image picked yet.</p>}
+      <div className="flex items-start gap-6 mb-4">
+        <div className="w-40 h-40 border-2 border-[#a4abb9] flex justify-center items-center text-center text-[#a4abb9] relative">
+          {!pickedImage && <p className="m-0 p-4">No image picked yet.</p>}
           {pickedImage && (
             <Image
               src={pickedImage as string}
               alt="The image selected by the user."
               fill
+              className="object-cover"
             />
           )}
         </div>
         <input
-          className={classes.input}
+          className="hidden"
           type="file"
           id={name}
           accept="image/png, image/jpeg"
@@ -61,7 +61,7 @@ export default function ImagePicker({ label, name }: ImagePickerProps) {
           required
         />
         <button
-          className={classes.button}
+          className="border-0 py-2 px-6 bg-[#a4abb9] rounded hover:bg-[#b3b9c6] focus:bg-[#b3b9c6] cursor-pointer font-inherit"
           type="button"
           onClick={handlePickClick}
         >
