@@ -1,4 +1,5 @@
 import MainHeader from "@/components/main-header/MainHeader";
+import ClientWrapper from "@/components/ClientWrapper";
 import { ReactNode } from "react";
 import "./globals.css";
 
@@ -7,7 +8,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     <html lang="en">
       <body>
         <MainHeader />
-        {children}
+        <ClientWrapper>{children}</ClientWrapper>
       </body>
     </html>
   );

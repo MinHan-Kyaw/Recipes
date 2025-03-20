@@ -1,5 +1,4 @@
 "use client";
-
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
@@ -20,12 +19,27 @@ export default function MealItem({
   creator,
 }: MealItemProps) {
   const router = useRouter();
+
   const handleClick = () => {
-    router.push(`/meals/${slug}`);
+    // Create a transition effect before navigation
+    const element = document.getElementById(`meal-${slug}`);
+    if (element) {
+      // Add Tailwind classes for the transition effect
+      element.classList.add("transform", "scale-105", "opacity-0");
+      element.style.transition = "all 300ms ease-in-out";
+
+      // Navigate after the transition completes
+      setTimeout(() => {
+        router.push(`/meals/${slug}`);
+      }, 300);
+    } else {
+      router.push(`/meals/${slug}`);
+    }
   };
 
   return (
     <motion.article
+      id={`meal-${slug}`}
       className="cursor-pointer flex flex-col justify-between h-full rounded-lg shadow-md overflow-hidden transition-all duration-300 ease-in-out bg-white text-[#333333] hover:shadow-lg hover:shadow-[rgba(46,139,87,0.2)] hover:-translate-y-1"
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
