@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { Suspense } from "react";
 import MealsGrid from "@/components/meals/MealsGrid";
 import { getMeals } from "@/lib/utils/meals";
