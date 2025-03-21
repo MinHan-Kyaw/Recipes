@@ -1,42 +1,64 @@
 import React, { useState, useRef } from "react";
-import { X, GripVertical, Check, Plus, ChefHat, Pencil } from "lucide-react";
+import { X, GripVertical, Check, Plus } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 
-// Modern button component with animation
+// Modern button component with animation using shadcn Button
 const AnimatedButton: React.FC<{
   onClick: () => void;
   className?: string;
   icon?: React.ReactNode;
   children: React.ReactNode;
   isPrimary?: boolean;
-}> = ({ onClick, className = "", icon, children, isPrimary = false }) => {
+  variant?:
+    | "default"
+    | "outline"
+    | "secondary"
+    | "ghost"
+    | "link"
+    | "destructive";
+}> = ({
+  onClick,
+  className = "",
+  icon,
+  children,
+  isPrimary = false,
+  variant = "outline",
+}) => {
   return (
-    <motion.button
-      onClick={onClick}
-      className={`inline-flex items-center gap-2 py-3 px-4 rounded-lg font-medium cursor-pointer ${
-        isPrimary
-          ? "bg-red-600 text-white hover:bg-red-700 shadow-sm"
-          : "bg-white border border-gray-200 text-gray-700 hover:bg-gray-50"
-      } ${className}`}
-      whileHover={{ scale: 1.02, boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)" }}
+    <motion.div
+      whileHover={{ scale: 1.02 }}
       whileTap={{ scale: 0.98 }}
       transition={{ duration: 0.2 }}
     >
-      {icon}
-      {children}
-    </motion.button>
+      <Button
+        onClick={onClick}
+        className={`gap-2 ${className}`}
+        variant={isPrimary ? "default" : variant}
+      >
+        {icon}
+        {children}
+      </Button>
+    </motion.div>
   );
 };
 
-// Extract dialog component with animations
+// Extract dialog component with animations using shadcn Dialog
 const BulkAddDialog: React.FC<{
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (ingredients: string[]) => void;
 }> = ({ isOpen, onClose, onSubmit }) => {
   const [bulkIngredients, setBulkIngredients] = useState("");
-
-  if (!isOpen) return null;
 
   const handleSubmit = () => {
     const newIngredients = bulkIngredients
@@ -48,83 +70,47 @@ const BulkAddDialog: React.FC<{
   };
 
   return (
-    <AnimatePresence>
-      {isOpen && (
-        <motion.div
-          className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50"
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="sm:max-w-lg">
+        <DialogHeader>
+          <DialogTitle className="text-xl font-semibold text-gray-800">
+            Add multiple ingredients
+          </DialogTitle>
+        </DialogHeader>
+
+        <motion.p
+          className="text-sm text-gray-600 mb-4"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          onClick={onClose}
+          transition={{ delay: 0.2 }}
         >
-          <motion.div
-            className="bg-white rounded-lg p-6 w-full max-w-lg shadow-xl"
-            initial={{ scale: 0.9, opacity: 0, y: 20 }}
-            animate={{ scale: 1, opacity: 1, y: 0 }}
-            exit={{ scale: 0.9, opacity: 0, y: 20 }}
-            transition={{ type: "spring", damping: 25, stiffness: 300 }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex justify-between items-center mb-4">
-              <motion.h2
-                className="text-xl font-semibold text-gray-800 m-0"
-                initial={{ x: -20, opacity: 0 }}
-                animate={{ x: 0, opacity: 1 }}
-                transition={{ delay: 0.1 }}
-              >
-                Add multiple ingredients
-              </motion.h2>
-              <motion.button
-                onClick={onClose}
-                className="bg-transparent border-none text-gray-500 cursor-pointer p-1 hover:text-gray-700 rounded-full"
-                whileHover={{
-                  scale: 1.1,
-                  backgroundColor: "rgba(239, 68, 68, 0.1)",
-                }}
-                whileTap={{ scale: 0.95 }}
-                aria-label="Close dialog"
-              >
-                <X size={20} />
-              </motion.button>
-            </div>
-            <motion.p
-              className="text-sm text-gray-600 mb-4"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.2 }}
-            >
-              Paste your ingredient list here. Add one ingredient per line.
-              Include the quantity (i.e. cups, tablespoons) and any special
-              preparation (i.e. sifted, softened, chopped).
-            </motion.p>
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-            >
-              <textarea
-                className="w-full min-h-[150px] p-3 border border-gray-200 rounded-md text-sm text-gray-800 resize-y mb-4 focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500"
-                value={bulkIngredients}
-                onChange={(e) => setBulkIngredients(e.target.value)}
-                placeholder={`Example:\n2 cups of flour, sifted\n1 cup sugar\n2 tablespoons butter, softened`}
-                rows={10}
-              />
-            </motion.div>
-            <motion.div
-              className="flex justify-end gap-3"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.4 }}
-            >
-              <AnimatedButton onClick={onClose}>Cancel</AnimatedButton>
-              <AnimatedButton onClick={handleSubmit} isPrimary>
-                Submit
-              </AnimatedButton>
-            </motion.div>
-          </motion.div>
+          Paste your ingredient list here. Add one ingredient per line. Include
+          the quantity (i.e. cups, tablespoons) and any special preparation
+          (i.e. sifted, softened, chopped).
+        </motion.p>
+
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+        >
+          <Textarea
+            className="min-h-[150px] resize-y mb-4 focus:border-primary focus:ring-1 focus:ring-primary"
+            value={bulkIngredients}
+            onChange={(e) => setBulkIngredients(e.target.value)}
+            placeholder={`Example:\n2 cups of flour, sifted\n1 cup sugar\n2 tablespoons butter, softened`}
+            rows={10}
+          />
         </motion.div>
-      )}
-    </AnimatePresence>
+
+        <DialogFooter className="gap-3">
+          <AnimatedButton onClick={onClose}>Cancel</AnimatedButton>
+          <AnimatedButton onClick={handleSubmit} isPrimary variant="default">
+            Submit
+          </AnimatedButton>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 };
 
@@ -171,17 +157,17 @@ const IngredientItem: React.FC<{
           <span className="flex-1 text-sm text-gray-800">{ingredient}</span>
         </>
       ) : (
-        <input
+        <Input
           type="text"
           value={ingredient}
           onChange={(e) => onUpdate(index, e.target.value)}
           placeholder="e.g. 2 cups flour, sifted"
-          className="flex-1 border-none bg-transparent text-sm p-0 text-gray-800 placeholder:text-gray-400 focus:outline-none"
+          className="flex-1 border-none bg-transparent text-sm p-0 text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-0"
         />
       )}
       <motion.button
         onClick={() => onRemove(index)}
-        className="flex items-center justify-center bg-transparent border-none p-1 text-gray-400 cursor-pointer rounded-full hover:text-red-500 hover:bg-red-50"
+        className="flex items-center justify-center bg-transparent border-none p-1 text-gray-400 cursor-pointer rounded-full hover:text-primary hover:bg-primary/10"
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.9 }}
         aria-label="Remove ingredient"
@@ -306,7 +292,7 @@ export const IngredientList: React.FC<IngredientListProps> = ({
         <span>
           Enter ingredients below or{" "}
           <motion.button
-            className="bg-transparent border-none p-0 text-red-600 underline cursor-pointer text-inherit"
+            className="bg-transparent border-none p-0 text-primary underline cursor-pointer text-inherit"
             onClick={() => setIsDialogOpen(true)}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
@@ -317,8 +303,8 @@ export const IngredientList: React.FC<IngredientListProps> = ({
         <motion.button
           className={`flex items-center gap-2 py-2 px-4 border rounded-md bg-white text-xs font-semibold cursor-pointer ${
             isReorderMode
-              ? "border-emerald-500 text-emerald-500"
-              : "border-red-500 text-red-500 hover:bg-red-50"
+              ? "border-secondary text-secondary"
+              : "border-primary text-primary hover:bg-primary/5"
           }`}
           onClick={toggleReorderMode}
           whileHover={{
@@ -330,7 +316,7 @@ export const IngredientList: React.FC<IngredientListProps> = ({
           animate={
             isReorderMode
               ? {
-                  backgroundColor: "rgba(16, 185, 129, 0.05)",
+                  backgroundColor: "rgba(76, 175, 80, 0.05)",
                 }
               : {
                   backgroundColor: "white",
@@ -406,7 +392,7 @@ export const IngredientList: React.FC<IngredientListProps> = ({
           >
             <AnimatedButton
               onClick={handleAddIngredient}
-              className="text-sm"
+              className="text-sm bg-white hover:bg-primary/5 text-primary border-primary"
               icon={<Plus size={16} />}
             >
               ADD INGREDIENT

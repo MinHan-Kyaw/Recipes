@@ -1,7 +1,15 @@
 "use client";
+
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import {
+  Card,
+  CardHeader,
+  CardContent,
+  CardFooter,
+} from "@/components/ui/card";
+import { Clock } from "lucide-react";
 
 interface MealItemProps {
   title: string;
@@ -21,34 +29,18 @@ export default function MealItem({
   const router = useRouter();
 
   const handleClick = () => {
-    // Create a transition effect before navigation
-    const element = document.getElementById(`meal-${slug}`);
-    if (element) {
-      // Add Tailwind classes for the transition effect
-      element.classList.add("transform", "scale-105", "opacity-0");
-      element.style.transition = "all 300ms ease-in-out";
-
-      // Navigate after the transition completes
-      setTimeout(() => {
-        router.push(`/meals/${slug}`);
-      }, 300);
-    } else {
-      router.push(`/meals/${slug}`);
-    }
+    router.push(`/meals/${slug}`);
   };
 
   return (
-    <motion.article
+    <Card
       id={`meal-${slug}`}
-      className="cursor-pointer flex flex-col justify-between h-full rounded-lg shadow-md overflow-hidden transition-all duration-300 ease-in-out bg-white text-[#333333] hover:shadow-lg hover:shadow-[rgba(46,139,87,0.2)] hover:-translate-y-1"
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.5 }}
+      className="cursor-pointer h-full transition-all duration-300 ease-in-out hover:shadow-lg hover:shadow-primary/20 hover:-translate-y-1"
       onClick={handleClick}
     >
-      <header>
+      <CardHeader className="p-0">
         <motion.div
-          className="relative w-full h-[200px] overflow-hidden"
+          className="relative w-full h-48 overflow-hidden"
           whileHover={{ scale: 1.1 }}
           transition={{ duration: 0.3 }}
         >
@@ -61,33 +53,19 @@ export default function MealItem({
           />
         </motion.div>
         <div className="p-4 pb-2">
-          <h2 className="m-0 text-2xl font-['Montserrat'] text-[#2e8b57]">
+          <h2 className="m-0 text-2xl font-['Montserrat'] text-primary">
             {title}
           </h2>
-          <p className="text-sm text-[#666666] italic">by {creator}</p>
+          <p className="text-sm text-muted-foreground italic">by {creator}</p>
         </div>
-      </header>
-      <div className="flex flex-col justify-between h-full">
-        <p className="px-4 text-base text-[#555555]">{summary}</p>
-        <div className="p-4 text-left flex items-center text-[#2e8b57]">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="16"
-            height="16"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className="mr-2 align-middle"
-          >
-            <circle cx="12" cy="12" r="10" />
-            <polyline points="12 6 12 12 16 14" />
-          </svg>
-          <span>40 mins</span>
-        </div>
-      </div>
-    </motion.article>
+      </CardHeader>
+      <CardContent className="flex-grow">
+        <p className="text-base text-foreground/80">{summary}</p>
+      </CardContent>
+      <CardFooter className="text-left flex items-center text-primary">
+        <Clock className="mr-2 h-4 w-4" />
+        <span>40 mins</span>
+      </CardFooter>
+    </Card>
   );
 }

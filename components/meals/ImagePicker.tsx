@@ -2,13 +2,22 @@
 
 import { useRef, useState } from "react";
 import Image from "next/image";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Card } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 
 interface ImagePickerProps {
   label: string;
   name: string;
+  className?: string;
 }
 
-export default function ImagePicker({ label, name }: ImagePickerProps) {
+export default function ImagePicker({
+  label,
+  name,
+  className,
+}: ImagePickerProps) {
   const [pickedImage, setPickedImage] = useState<string | ArrayBuffer | null>(
     null
   );
@@ -36,10 +45,10 @@ export default function ImagePicker({ label, name }: ImagePickerProps) {
   }
 
   return (
-    <div>
-      <label htmlFor={name}>{label}</label>
+    <div className={cn("space-y-2", className)}>
+      <Label htmlFor={name}>{label}</Label>
       <div className="flex items-start gap-6 mb-4">
-        <div className="w-40 h-40 border-2 border-[#a4abb9] flex justify-center items-center text-center text-[#a4abb9] relative">
+        <Card className="w-40 h-40 flex justify-center items-center text-center text-muted-foreground relative overflow-hidden">
           {!pickedImage && <p className="m-0 p-4">No image picked yet.</p>}
           {pickedImage && (
             <Image
@@ -49,7 +58,7 @@ export default function ImagePicker({ label, name }: ImagePickerProps) {
               className="object-cover"
             />
           )}
-        </div>
+        </Card>
         <input
           className="hidden"
           type="file"
@@ -60,13 +69,14 @@ export default function ImagePicker({ label, name }: ImagePickerProps) {
           onChange={handleImageChange}
           required
         />
-        <button
-          className="border-0 py-2 px-6 bg-[#a4abb9] rounded hover:bg-[#b3b9c6] focus:bg-[#b3b9c6] cursor-pointer font-inherit"
+        <Button
           type="button"
           onClick={handlePickClick}
+          variant="secondary"
+          className="hover:text-food-gradient"
         >
           Pick an Image
-        </button>
+        </Button>
       </div>
     </div>
   );

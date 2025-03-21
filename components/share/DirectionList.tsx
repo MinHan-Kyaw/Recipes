@@ -1,4 +1,7 @@
 import React from "react";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { X, Plus } from "lucide-react";
 
 interface DirectionListProps {
   directions: string[];
@@ -28,26 +31,31 @@ const DirectionList: React.FC<DirectionListProps> = ({
     <div className="flex flex-col gap-4 w-full">
       {directions.map((direction, index) => (
         <div key={index} className="flex gap-2 items-start relative">
-          <textarea
+          <Textarea
             value={direction}
             onChange={(e) => updateDirection(index, e.target.value)}
             placeholder="e.g. Preheat oven to 350 degrees F..."
-            className="flex-1 min-h-[80px] p-3 border border-slate-200 rounded-md text-sm leading-6 resize-y focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 placeholder:text-slate-400"
+            className="flex-1 min-h-[80px] resize-y"
           />
-          <button
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
             onClick={() => removeDirection(index)}
-            className="bg-transparent border-none p-1 text-slate-400 cursor-pointer absolute right-2 top-2 hover:text-red-500"
+            className="absolute right-2 top-2 h-6 w-6 text-slate-400 hover:text-red-500 hover:bg-transparent"
           >
-            Remove
-          </button>
+            <X className="h-4 w-4" />
+          </Button>
         </div>
       ))}
-      <button
+      <Button
+        type="button"
+        variant="outline"
         onClick={addDirection}
-        className="inline-flex items-center py-2 px-4 bg-white border border-slate-200 rounded-md text-slate-500 text-sm font-medium cursor-pointer w-fit hover:bg-slate-50 before:content-['+'] before:mr-2 before:text-base"
+        className="text-sm font-medium w-fit text-primary hover:text-primary/90 hover:bg-primary/10 border-primary/20"
       >
-        Add Step
-      </button>
+        <Plus className="mr-2 h-4 w-4" /> Add Step
+      </Button>
     </div>
   );
 };

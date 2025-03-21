@@ -1,5 +1,8 @@
 import Link from "next/link";
 import ImageSlideshow from "@/components/images/ImageSlideshow";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import "./globals.css";
 
 export default function Home() {
   return (
@@ -9,59 +12,66 @@ export default function Home() {
           <ImageSlideshow />
         </div>
         <div className="flex flex-col justify-center">
-          <div className="text-[#2e8b57] text-2xl mb-4">
-            <h1 className="text-2xl font-bold font-['Montserrat',sans-serif] tracking-wider uppercase bg-gradient-to-r from-[#2e8b57] to-[#daa520] bg-clip-text text-transparent">
+          <div className="text-2xl mb-4">
+            <h1 className="text-2xl font-bold tracking-wider uppercase bg-gradient-to-r from-emerald-600 to-amber-500 bg-clip-text text-transparent">
               NextLevel Food for NextLevel Foodies
             </h1>
-            <p className="mt-4">Taste & share food from all over the world.</p>
+            <p className="mt-4 text-emerald-600">
+              Taste & share food from all over the world.
+            </p>
           </div>
           <div className="text-2xl flex flex-wrap gap-4">
-            <Link
-              href="/community"
-              className="inline-block mt-4 px-4 py-2 rounded-lg font-bold text-[#2e8b57] border-2 border-[#2e8b57] transition-all duration-300 hover:bg-[rgba(46,139,87,0.1)] hover:text-[#1a5c3a]"
+            <Button
+              variant="outline"
+              className="mt-4 text-emerald-600 border-emerald-600 hover:bg-emerald-50 hover:text-emerald-800 py-6 px-10 text-xl"
+              asChild
             >
-              Join the Community
-            </Link>
-            <Link
-              href="/meals"
-              className="inline-block mt-4 px-4 py-2 rounded-lg font-bold bg-[#daa520] text-white transition-all duration-300 hover:bg-[#b8860b]"
+              <Link href="/auth/login">Login</Link>
+            </Button>
+            <Button
+              className="ml-4 mt-4 bg-amber-500 hover:bg-amber-600 text-white py-6 px-10 text-2xl"
+              asChild
             >
-              Explore Meals
-            </Link>
+              <Link href="/meals">Explore Meals</Link>
+            </Button>
           </div>
         </div>
       </header>
 
       <main>
-        <section className="flex flex-col text-[#2e8b57] text-2xl max-w-3xl w-[90%] mx-auto my-8 text-center">
-          <h2 className="text-[#4caf50] text-3xl font-bold mb-4">
-            How it works
-          </h2>
-          <p className="mb-4">
-            NextLevel Food is a platform for foodies to share their favorite
-            recipes with the world. It&apos;s a place to discover new dishes,
-            and to connect with other food lovers.
-          </p>
-          <p>
-            NextLevel Food is a place to discover new dishes, and to connect
-            with other food lovers.
-          </p>
-        </section>
+        <Card className="max-w-3xl w-[90%] mx-auto my-8 border-0 shadow-none">
+          <CardContent className="text-center p-6">
+            <h2 className="text-green-500 text-3xl font-bold mb-4">
+              How it works
+            </h2>
+            <p className="mb-4 text-2xl text-emerald-600">
+              NextLevel Food is a platform for foodies to share their favorite
+              recipes with the world. It&apos;s a place to discover new dishes,
+              and to connect with other food lovers.
+            </p>
+            <p className="text-2xl text-emerald-600">
+              NextLevel Food is a place to discover new dishes, and to connect
+              with other food lovers.
+            </p>
+          </CardContent>
+        </Card>
 
-        <section className="flex flex-col text-[#2e8b57] text-2xl max-w-3xl w-[90%] mx-auto my-8 text-center">
-          <h2 className="text-[#4caf50] text-3xl font-bold mb-4">
-            Why NextLevel Food?
-          </h2>
-          <p className="mb-4">
-            NextLevel Food is a platform for foodies to share their favorite
-            recipes with the world. It&apos;s a place to discover new dishes,
-            and to connect with other food lovers.
-          </p>
-          <p>
-            NextLevel Food is a place to discover new dishes, and to connect
-            with other food lovers.
-          </p>
-        </section>
+        <Card className="max-w-3xl w-[90%] mx-auto my-8 border-0 shadow-none">
+          <CardContent className="text-center p-6">
+            <h2 className="text-green-500 text-3xl font-bold mb-4">
+              Why NextLevel Food?
+            </h2>
+            <p className="mb-4 text-2xl text-emerald-600">
+              NextLevel Food is a platform for foodies to share their favorite
+              recipes with the world. It&apos;s a place to discover new dishes,
+              and to connect with other food lovers.
+            </p>
+            <p className="text-2xl text-emerald-600">
+              NextLevel Food is a place to discover new dishes, and to connect
+              with other food lovers.
+            </p>
+          </CardContent>
+        </Card>
       </main>
     </>
   );

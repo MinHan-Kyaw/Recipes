@@ -25,7 +25,7 @@ export default function MainHeader() {
               filter: "drop-shadow(0 0 0.75rem rgba(46, 139, 87, 0.3))",
             }}
           />
-          <span className="text-[#2e8b57] transition-all duration-300 ease-in-out hover:bg-gradient-to-r hover:from-[#4caf50] hover:to-[#daa520] hover:bg-clip-text hover:text-transparent">
+          <span className="text-primary transition-all duration-300 ease-in-out hover-food-gradient">
             NextLevel Food
           </span>
         </Link>
@@ -37,6 +37,9 @@ export default function MainHeader() {
             </li>
             <li>
               <NavLink href="/share">Share Recipe</NavLink>
+            </li>
+            <li>
+              <NavLink href="/register-shop">Register Shop</NavLink>
             </li>
           </ul>
         </nav>

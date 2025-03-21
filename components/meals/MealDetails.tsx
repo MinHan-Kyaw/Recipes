@@ -1,6 +1,8 @@
 "use client";
 import Image from "next/image";
 import { motion } from "framer-motion";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 
 interface Meal {
   title: string;
@@ -73,14 +75,14 @@ export default function MealDetailsPage({ meal }: { meal: Meal }) {
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.5, delay: 0.2 }}
             >
-              <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-emerald-600 to-amber-500 bg-clip-text text-transparent">
+              <h1 className="text-4xl md:text-5xl font-bold text-primary">
                 {meal.title}
               </h1>
-              <p className="text-lg text-rose-300 italic">
+              <p className="text-lg text-secondary italic">
                 by{" "}
                 <a
                   href={`mailto:${meal.creator_email}`}
-                  className="bg-gradient-to-r from-orange-500 to-amber-400 bg-clip-text text-transparent hover:text-shadow transition duration-300"
+                  className="text-accent hover:underline transition duration-300"
                 >
                   {meal.creator}
                 </a>
@@ -94,93 +96,104 @@ export default function MealDetailsPage({ meal }: { meal: Meal }) {
       {/* Recipe Card */}
       <main className="container mx-auto px-4 py-8 md:py-16">
         <motion.div
-          className="relative bg-white rounded-2xl shadow-md p-8 max-w-4xl mx-auto"
           initial={{ opacity: 0, y: 40 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.4 }}
+          className="max-w-4xl mx-auto"
         >
-          {/* Recipe Title */}
-          <div className="absolute -top-5 left-1/2 transform -translate-x-1/2 bg-white px-6 py-2 border border-dashed border-emerald-500 rounded-full">
-            <h2 className="text-sm font-bold uppercase tracking-wider text-gray-800">
-              Recipe
-            </h2>
-          </div>
-
-          {/* Time Information */}
-          <motion.div
-            className="mt-8 mb-10"
-            variants={stagger}
-            initial="initial"
-            animate="animate"
-          >
-            <div className="flex flex-col sm:flex-row justify-between gap-4">
-              <motion.div
-                className="text-center p-4 bg-gray-50 rounded-lg flex-1"
-                variants={fadeInUp}
+          <Card className="relative">
+            {/* Recipe Title Badge */}
+            <div className="absolute -top-5 left-1/2 transform -translate-x-1/2">
+              <Badge
+                variant="outline"
+                className="bg-white border-primary px-6 py-2"
               >
-                <h3 className="text-sm font-medium text-emerald-600 mb-2">
-                  PREP TIME
-                </h3>
-                <p className="text-lg font-medium text-gray-800">10 mins</p>
-              </motion.div>
-              <motion.div
-                className="text-center p-4 bg-gray-50 rounded-lg flex-1"
-                variants={fadeInUp}
-              >
-                <h3 className="text-sm font-medium text-emerald-600 mb-2">
-                  COOK TIME
-                </h3>
-                <p className="text-lg font-medium text-gray-800">35 mins</p>
-              </motion.div>
-              <motion.div
-                className="text-center p-4 bg-gray-50 rounded-lg flex-1"
-                variants={fadeInUp}
-              >
-                <h3 className="text-sm font-medium text-emerald-600 mb-2">
-                  TOTAL TIME
-                </h3>
-                <p className="text-lg font-medium text-gray-800">45 mins</p>
-              </motion.div>
+                <span className="text-sm font-bold uppercase tracking-wider text-gray-800">
+                  Recipe
+                </span>
+              </Badge>
             </div>
-          </motion.div>
 
-          {/* Ingredients */}
-          <motion.div
-            className="mb-10"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.6, delay: 0.6 }}
-          >
-            <h3 className="text-2xl font-semibold text-gray-800 mb-6">
-              Ingredients
-            </h3>
-            <motion.ul
-              className="space-y-3"
-              variants={stagger}
-              initial="initial"
-              animate="animate"
-            >
-              {ingredients.map((ingredient, index) => (
-                <motion.li
-                  key={index}
-                  className="flex items-start text-gray-700"
-                  variants={fadeInUp}
+            <CardHeader className="pt-10">
+              {/* Time Information */}
+              <motion.div
+                className="mt-4"
+                variants={stagger}
+                initial="initial"
+                animate="animate"
+              >
+                <div className="flex flex-col sm:flex-row justify-between gap-4">
+                  <motion.div
+                    className="text-center p-4 bg-gray-50 rounded-lg flex-1"
+                    variants={fadeInUp}
+                  >
+                    <h3 className="text-sm font-medium text-primary mb-2">
+                      PREP TIME
+                    </h3>
+                    <p className="text-lg font-medium text-gray-800">10 mins</p>
+                  </motion.div>
+                  <motion.div
+                    className="text-center p-4 bg-gray-50 rounded-lg flex-1"
+                    variants={fadeInUp}
+                  >
+                    <h3 className="text-sm font-medium text-primary mb-2">
+                      COOK TIME
+                    </h3>
+                    <p className="text-lg font-medium text-gray-800">35 mins</p>
+                  </motion.div>
+                  <motion.div
+                    className="text-center p-4 bg-gray-50 rounded-lg flex-1"
+                    variants={fadeInUp}
+                  >
+                    <h3 className="text-sm font-medium text-primary mb-2">
+                      TOTAL TIME
+                    </h3>
+                    <p className="text-lg font-medium text-gray-800">45 mins</p>
+                  </motion.div>
+                </div>
+              </motion.div>
+            </CardHeader>
+
+            <CardContent>
+              {/* Ingredients */}
+              <motion.div
+                className="mb-10"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.6, delay: 0.6 }}
+              >
+                <h3 className="text-2xl font-semibold text-gray-800 mb-6">
+                  Ingredients
+                </h3>
+                <motion.ul
+                  className="space-y-3"
+                  variants={stagger}
+                  initial="initial"
+                  animate="animate"
                 >
-                  <span className="text-emerald-500 text-xl mr-3">•</span>
-                  <span className="text-base">{ingredient}</span>
-                </motion.li>
-              ))}
-            </motion.ul>
-          </motion.div>
+                  {ingredients.map((ingredient, index) => (
+                    <motion.li
+                      key={index}
+                      className="flex items-start text-gray-700"
+                      variants={fadeInUp}
+                    >
+                      <span className="text-secondary text-xl mr-3">•</span>
+                      <span className="text-base">{ingredient}</span>
+                    </motion.li>
+                  ))}
+                </motion.ul>
+              </motion.div>
 
-          {/* Instructions (commented out in original code) */}
-          {/* <div className="mb-10">
-            <h3 className="text-2xl font-semibold text-gray-800 mb-6">Instructions</h3>
-            <div 
-              className="text-base text-gray-700 leading-relaxed"
-              dangerouslySetInnerHTML={{ __html: meal.instructions }}
-            />
-          </div> */}
+              {/* Instructions (commented out in original code) */}
+              {/* <div className="mb-10">
+                <h3 className="text-2xl font-semibold text-gray-800 mb-6">Instructions</h3>
+                <div 
+                  className="text-base text-gray-700 leading-relaxed"
+                  dangerouslySetInnerHTML={{ __html: meal.instructions }}
+                />
+              </div> */}
+            </CardContent>
+          </Card>
         </motion.div>
       </main>
     </div>

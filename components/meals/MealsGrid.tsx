@@ -13,7 +13,7 @@ export default function MealsGrid({ meals, loading = false }: MealsGridProps) {
   if (loading) {
     return (
       <ul className={gridClasses}>
-        {[...Array(6)].map((_, index) => (
+        {[...Array(8)].map((_, index) => (
           <li key={index}>
             <MealLoadingSkeleton />
           </li>
