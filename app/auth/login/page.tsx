@@ -16,6 +16,8 @@ import {
 } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
+import Cookies from "js-cookie";
+import { useAuth } from "@/components/AuthProvider";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -23,6 +25,7 @@ export default function Login() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const router = useRouter();
+  const { setUser } = useAuth();
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -36,12 +39,23 @@ export default function Login() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ email, password }),
+        credentials: "include",
       });
 
       const data = await response.json();
 
       if (!response.ok) {
         throw new Error(data.error || "Failed to login");
+      } else {
+        Cookies.set("token", data.token);
+        const userResponse = await fetch("/api/auth/me");
+        if (userResponse.ok) {
+          const userData = await userResponse.json();
+          if (userData.success) {
+            // Update the auth context directly
+            setUser(userData.data);
+          }
+        }
       }
 
       // Redirect on successful login

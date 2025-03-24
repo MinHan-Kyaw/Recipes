@@ -85,3 +85,13 @@
     @apply bg-gradient-to-r from-secondary to-accent bg-clip-text text-transparent;
   }
 }
+
+/* Additional styles for profile dropdown */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.absolute {
+  animation: fadeIn 0.2s ease-out;
+}

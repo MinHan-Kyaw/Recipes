@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "predev": "source ~/.nvm/nvm.sh && nvm use 23",
-    "dev": "next dev",
+    "dev": "source ~/.nvm/nvm.sh && nvm use 23 && next dev",
     "build": "next build",
     "start": "next start",
     "lint": "next lint"

@@ -32,18 +32,14 @@ export async function POST(request) {
     const token = jwt.sign(
       { userId: user._id },
       process.env.JWT_SECRET || "your-default-secret",
-      { expiresIn: "1d" }
+      { expiresIn: "7d" }
     );
 
     // Set cookie with token
     const response = NextResponse.json({
       success: true,
-      data: {
-        _id: user._id,
-        name: user.name,
-        email: user.email,
-        status: user.status,
-      },
+      token: token,
+      data: user,
     });
 
     // Set HttpOnly cookie
@@ -55,7 +51,7 @@ export async function POST(request) {
       path: "/",
     });
 
-    response.cookies.set("isLoggedIn", token, {
+    response.cookies.set("token", token, {
       httpOnly: false,
       secure: process.env.NODE_ENV === "production",
       sameSite: "strict",

@@ -4,7 +4,7 @@ import Link from "next/link";
 import ImageSlideshow from "@/components/images/ImageSlideshow";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Cookies from "js-cookie";
 import { jwtDecode } from "jwt-decode";
 import "./globals.css";
@@ -15,20 +15,21 @@ export default function Home() {
     iat: number;
     exp: number;
   }
+  const [isLogin, setIsLogin] = useState(false);
   useEffect(() => {
     // Get the token from cookies
-    const isLoggedIn = Cookies.get("isLoggedIn");
-    if (isLoggedIn) {
+    const token = Cookies.get("token");
+    if (token && token !== "undefined") {
+      setIsLogin(true);
       // Decode the token to get the payload
-      const decodedToken = jwtDecode<JwtPayload>(isLoggedIn);
-      console.log("Decoded token:", decodedToken);
-      console.log("Decoded token:", decodedToken.userId);
+      const decodedToken = jwtDecode<JwtPayload>(token);
+      // console.log("Decoded token:", decodedToken);
+      // console.log("Decoded token:", decodedToken.userId);
 
       // Extract userId from the decoded token
       // const { userId } = decodedToken;
       // console.log("User ID from token:", userId);
     }
-    console.log("Token from cookie", isLoggedIn);
   }, []);
 
   return (
