@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { X, ChefHat, Pencil, Clock, Users, Book } from "lucide-react";
+import { X, ChefHat, Pencil, Clock, Users, Book, Loader2 } from "lucide-react";
 import { IngredientList } from "@/components/share/IngredientList";
 import DirectionList from "@/components/share/DirectionList";
 import { useRouter } from "next/navigation";
@@ -16,6 +16,9 @@ import { Separator } from "@/components/ui/separator";
 import { VideoLink } from "@/components/share/VideoLink";
 import { ImageUpload } from "@/components/share/ImageUpload";
 import { Recipe, RecipeImage } from "@/lib/types/recipe";
+import { useToast } from "@/hooks/use-toast";
+import { createRecipe } from "@/lib/api/recipes";
+import Cookies from "js-cookie";
 
 // Shadcn form field component
 const FormField: React.FC<{
@@ -24,7 +27,7 @@ const FormField: React.FC<{
   value: string | number;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   placeholder?: string;
-  label: string;
+  label: React.ReactNode;
   icon?: React.ReactNode;
   type?: string;
   suffix?: string;
@@ -76,7 +79,7 @@ const TextareaField: React.FC<{
   value: string;
   onChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
   placeholder?: string;
-  label: string;
+  label: React.ReactNode;
   rows?: number;
 }> = ({ id, name, value, onChange, placeholder, label, rows = 4 }) => {
   return (
@@ -99,6 +102,10 @@ const TextareaField: React.FC<{
 
 // Main component
 const CreateRecipe: React.FC = () => {
+  const router = useRouter();
+  const { toast } = useToast();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const [recipe, setRecipe] = useState<Recipe>({
     title: "",
     description: "",
@@ -112,6 +119,8 @@ const CreateRecipe: React.FC = () => {
     // New fields
     images: [],
     videoUrl: "",
+    category: "",
+    cuisine: "",
   });
 
   const handleInputChange = (
@@ -121,13 +130,75 @@ const CreateRecipe: React.FC = () => {
     setRecipe((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    // Handle form submission
-    console.log(recipe);
+  const handleNumberInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setRecipe((prev) => ({
+      ...prev,
+      [name]: value === "" ? 0 : parseInt(value, 10),
+    }));
   };
 
-  const router = useRouter();
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    // Handle form submission
+    setIsSubmitting(true);
+    try {
+      // Validate required fields
+      const requiredFields = [
+        "title",
+        "description",
+        "ingredients",
+        "directions",
+        "servings",
+        "prepTime",
+      ];
+
+      const missingFields = requiredFields.filter((field) => {
+        if (Array.isArray((recipe as Record<string, any>)[field])) {
+          return (recipe as Record<string, any>)[field].length === 0;
+        }
+        return !(recipe as Record<string, any>)[field];
+      });
+
+      if (missingFields.length > 0) {
+        throw new Error(
+          `Please fill in all required fields: ${missingFields.join(", ")}`
+        );
+      }
+      const token = Cookies.get("token");
+      const userId = token
+        ? JSON.parse(atob(token.split(".")[1])).userId
+        : null;
+      // Make sure author is set
+      const recipeData = {
+        ...recipe,
+        author: userId || recipe.author,
+      };
+      const result = await createRecipe(recipeData);
+      if (!result) {
+        throw new Error("Failed to create recipe");
+      }
+      toast({
+        title: "Recipe Created",
+        description: "Your recipe has been created successfully.",
+      });
+
+      // Redirect to the recipe page or recipes list
+      router.push("/share");
+    } catch (error) {
+      toast({
+        title: "Error",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Something went wrong. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+    console.log(recipe);
+  };
 
   const handleCancelClick = () => {
     router.push(`/meals`);
@@ -149,7 +220,11 @@ const CreateRecipe: React.FC = () => {
             value={recipe.title}
             onChange={handleInputChange}
             placeholder="Give your recipe a title"
-            label="Recipe Title"
+            label={
+              <>
+                Recipe Title <span className="text-red-500">*</span>
+              </>
+            }
             icon={<ChefHat size={20} />}
           />
 
@@ -160,7 +235,11 @@ const CreateRecipe: React.FC = () => {
             value={recipe.description}
             onChange={handleInputChange}
             placeholder="Share the story behind your recipe and what makes it special."
-            label="Description"
+            label={
+              <>
+                Description <span className="text-red-500">*</span>
+              </>
+            }
             rows={4}
           />
 
@@ -179,7 +258,7 @@ const CreateRecipe: React.FC = () => {
           {/* Ingredients Section */}
           <div className="mb-6">
             <h2 className="text-lg font-semibold text-gray-800 mb-3">
-              Ingredients
+              Ingredients <span className="text-red-500">*</span>
             </h2>
             <IngredientList
               ingredients={recipe.ingredients}
@@ -194,7 +273,7 @@ const CreateRecipe: React.FC = () => {
           {/* Directions Section */}
           <div className="mb-6">
             <h2 className="text-lg font-semibold text-gray-800 mb-3">
-              Directions
+              Directions <span className="text-red-500">*</span>
             </h2>
             <DirectionList
               directions={recipe.directions}
@@ -226,7 +305,11 @@ const CreateRecipe: React.FC = () => {
               value={recipe.servings}
               onChange={handleInputChange}
               placeholder="e.g. 8"
-              label="Servings"
+              label={
+                <>
+                  Servings <span className="text-red-500">*</span>
+                </>
+              }
               icon={<Users size={20} />}
             />
 
@@ -244,9 +327,13 @@ const CreateRecipe: React.FC = () => {
               id="prepTime"
               name="prepTime"
               value={recipe.prepTime}
-              onChange={handleInputChange}
+              onChange={handleNumberInputChange}
               type="number"
-              label="Prep Time"
+              label={
+                <>
+                  Prep Time <span className="text-red-500">*</span>
+                </>
+              }
               icon={<Clock size={20} />}
               suffix="mins"
             />
@@ -255,11 +342,32 @@ const CreateRecipe: React.FC = () => {
               id="cookTime"
               name="cookTime"
               value={recipe.cookTime}
-              onChange={handleInputChange}
+              onChange={handleNumberInputChange}
               type="number"
               label="Cook Time (optional)"
               icon={<Clock size={20} />}
               suffix="mins"
+            />
+          </div>
+
+          {/* Additional Recipe Details */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <FormField
+              id="category"
+              name="category"
+              value={recipe.category || ""}
+              onChange={handleInputChange}
+              placeholder="e.g. Dessert, Main Course"
+              label="Category (Optional)"
+            />
+
+            <FormField
+              id="cuisine"
+              name="cuisine"
+              value={recipe.cuisine || ""}
+              onChange={handleInputChange}
+              placeholder="e.g. Italian, Asian"
+              label="Cuisine (Optional)"
             />
           </div>
 
@@ -274,6 +382,11 @@ const CreateRecipe: React.FC = () => {
             rows={3}
           />
 
+          {/* Required Fields Note */}
+          <div className="mt-4 text-sm text-gray-500">
+            <span className="text-red-500">*</span> Required fields
+          </div>
+
           {/* Submit Section */}
           <div className="mt-8 flex justify-end gap-4">
             <Button
@@ -284,9 +397,18 @@ const CreateRecipe: React.FC = () => {
               <X size={18} />
               Cancel
             </Button>
-            <Button type="submit" className="gap-2">
-              <Pencil size={18} />
-              Submit Recipe
+            <Button type="submit" className="gap-2" disabled={isSubmitting}>
+              {isSubmitting ? (
+                <>
+                  <Loader2 size={18} className="animate-spin" />
+                  {"Saving..."}
+                </>
+              ) : (
+                <>
+                  <Pencil size={18} />
+                  {"Save Recipe"}
+                </>
+              )}
             </Button>
           </div>
         </form>

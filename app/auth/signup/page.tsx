@@ -18,6 +18,7 @@ import {
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
 import { User, SignupFormData } from "@/lib/types/user";
+import { signupUser } from "@/lib/api/signup";
 
 export default function Signup() {
   const [formData, setFormData] = useState<SignupFormData>({
@@ -51,25 +52,14 @@ export default function Signup() {
     setError("");
 
     try {
-      // Create user object from form data (excluding confirmPassword)
-      const userData: Omit<User, "id"> = {
+      const response = await signupUser({
         name: formData.name,
         email: formData.email,
         password: formData.password,
-      };
-
-      const response = await fetch("/api/auth/signup", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(userData),
       });
 
-      const data = await response.json();
-
       if (!response.ok) {
-        throw new Error(data.error || "Failed to sign up");
+        throw new Error(response.error || "Failed to sign up");
       }
       router.push("/auth/login?registered=true");
     } catch (err: any) {

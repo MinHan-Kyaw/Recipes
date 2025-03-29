@@ -18,7 +18,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
 import Cookies from "js-cookie";
 import { useAuth } from "@/components/AuthProvider";
-import { User } from "@/lib/types/user";
+import { loginUser } from "@/lib/api/login";
 
 // Login form interface
 interface LoginFormData {
@@ -52,24 +52,10 @@ export default function Login() {
     setError("");
 
     try {
-      const loginData: Pick<User, "email" | "password"> = {
-        email: formData.email,
-        password: formData.password,
-      };
-
-      const response = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(loginData),
-        credentials: "include",
-      });
-
-      const data = await response.json();
+      const response = await loginUser(formData.email, formData.password);
 
       if (!response.ok) {
-        throw new Error(data.error || "Failed to login");
+        throw new Error(response.error || "Failed to login");
       } else {
         // Set cookie options based on remember me
         const cookieOptions = {
@@ -77,7 +63,7 @@ export default function Login() {
           sameSite: "strict" as const, // Type assertion for TypeScript
         };
 
-        Cookies.set("token", data.token, cookieOptions);
+        Cookies.set("token", response.token, cookieOptions);
 
         const userResponse = await fetch("/api/auth/me");
         if (userResponse.ok) {
