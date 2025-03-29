@@ -155,6 +155,7 @@ npm start
 - React 18
 - TypeScript
 - TailwindCSS
+- Shadcn
 - better-sqlite3
 - framer-motion
 - react-hook-form
