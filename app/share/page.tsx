@@ -2,8 +2,8 @@
 
 import React, { useState } from "react";
 import { X, ChefHat, Pencil, Clock, Users, Book } from "lucide-react";
-import { IngredientList } from "../../components/share/IngredientList";
-import DirectionList from "../../components/share/DirectionList";
+import { IngredientList } from "@/components/share/IngredientList";
+import DirectionList from "@/components/share/DirectionList";
 import { useRouter } from "next/navigation";
 
 // Import shadcn components
@@ -13,18 +13,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-
-interface Recipe {
-  title: string;
-  description: string;
-  ingredients: string[];
-  directions: string[];
-  servings: string;
-  yield: string;
-  prepTime: number;
-  cookTime: number;
-  notes: string;
-}
+import { VideoLink } from "@/components/share/VideoLink";
+import { ImageUpload } from "@/components/share/ImageUpload";
+import { Recipe, RecipeImage } from "@/lib/types/recipe";
 
 // Shadcn form field component
 const FormField: React.FC<{
@@ -118,6 +109,9 @@ const CreateRecipe: React.FC = () => {
     prepTime: 0,
     cookTime: 0,
     notes: "",
+    // New fields
+    images: [],
+    videoUrl: "",
   });
 
   const handleInputChange = (
@@ -170,6 +164,18 @@ const CreateRecipe: React.FC = () => {
             rows={4}
           />
 
+          {/* Recipe Images - New section */}
+          <div className="mb-6">
+            <ImageUpload
+              images={recipe.images}
+              setImages={(images: RecipeImage[]) =>
+                setRecipe((prev) => ({ ...prev, images }))
+              }
+            />
+          </div>
+
+          <Separator className="my-6" />
+
           {/* Ingredients Section */}
           <div className="mb-6">
             <h2 className="text-lg font-semibold text-gray-800 mb-3">
@@ -194,6 +200,18 @@ const CreateRecipe: React.FC = () => {
               directions={recipe.directions}
               setDirections={(directions) =>
                 setRecipe((prev) => ({ ...prev, directions }))
+              }
+            />
+          </div>
+
+          <Separator className="my-6" />
+
+          {/* Video Link - New field */}
+          <div className="mb-6">
+            <VideoLink
+              videoUrl={recipe.videoUrl}
+              setVideoUrl={(videoUrl: string) =>
+                setRecipe((prev) => ({ ...prev, videoUrl }))
               }
             />
           </div>

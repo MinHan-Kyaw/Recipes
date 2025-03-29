@@ -11,46 +11,47 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { AnimatedButton } from "../AnimatedButton";
 
 // Modern button component with animation using shadcn Button
-const AnimatedButton: React.FC<{
-  onClick: () => void;
-  className?: string;
-  icon?: React.ReactNode;
-  children: React.ReactNode;
-  isPrimary?: boolean;
-  variant?:
-    | "default"
-    | "outline"
-    | "secondary"
-    | "ghost"
-    | "link"
-    | "destructive";
-}> = ({
-  onClick,
-  className = "",
-  icon,
-  children,
-  isPrimary = false,
-  variant = "outline",
-}) => {
-  return (
-    <motion.div
-      whileHover={{ scale: 1.02 }}
-      whileTap={{ scale: 0.98 }}
-      transition={{ duration: 0.2 }}
-    >
-      <Button
-        onClick={onClick}
-        className={`gap-2 ${className}`}
-        variant={isPrimary ? "default" : variant}
-      >
-        {icon}
-        {children}
-      </Button>
-    </motion.div>
-  );
-};
+// const AnimatedButton: React.FC<{
+//   onClick: () => void;
+//   className?: string;
+//   icon?: React.ReactNode;
+//   children: React.ReactNode;
+//   isPrimary?: boolean;
+//   variant?:
+//     | "default"
+//     | "outline"
+//     | "secondary"
+//     | "ghost"
+//     | "link"
+//     | "destructive";
+// }> = ({
+//   onClick,
+//   className = "",
+//   icon,
+//   children,
+//   isPrimary = false,
+//   variant = "outline",
+// }) => {
+//   return (
+//     <motion.div
+//       whileHover={{ scale: 1.02 }}
+//       whileTap={{ scale: 0.98 }}
+//       transition={{ duration: 0.2 }}
+//     >
+//       <Button
+//         onClick={onClick}
+//         className={`gap-2 ${className}`}
+//         variant={isPrimary ? "default" : variant}
+//       >
+//         {icon}
+//         {children}
+//       </Button>
+//     </motion.div>
+//   );
+// };
 
 // Extract dialog component with animations using shadcn Dialog
 const BulkAddDialog: React.FC<{
@@ -382,25 +383,15 @@ export const IngredientList: React.FC<IngredientListProps> = ({
       </AnimatePresence>
 
       {/* Add ingredient button (visible only when not in reorder mode) */}
-      <AnimatePresence>
-        {!isReorderMode && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 10 }}
-            transition={{ duration: 0.3 }}
-          >
-            <AnimatedButton
-              onClick={handleAddIngredient}
-              className="text-sm bg-white hover:bg-primary/5 text-primary border-primary"
-              icon={<Plus size={16} />}
-            >
-              ADD INGREDIENT
-            </AnimatedButton>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
+      {!isReorderMode && (
+        <AnimatedButton
+          onClick={handleAddIngredient}
+          className="text-sm bg-white hover:bg-primary/5 text-primary border-primary hover:text-primary"
+          icon={<Plus size={16} />}
+        >
+          ADD INGREDIENT
+        </AnimatedButton>
+      )}
       {/* Bulk add dialog */}
       <BulkAddDialog
         isOpen={isDialogOpen}

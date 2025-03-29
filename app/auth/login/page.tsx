@@ -18,14 +18,33 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
 import Cookies from "js-cookie";
 import { useAuth } from "@/components/AuthProvider";
+import { User } from "@/lib/types/user";
+
+// Login form interface
+interface LoginFormData {
+  email: string;
+  password: string;
+  rememberMe?: boolean;
+}
 
 export default function Login() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [formData, setFormData] = useState<LoginFormData>({
+    email: "",
+    password: "",
+    rememberMe: false,
+  });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const router = useRouter();
   const { setUser } = useAuth();
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { id, value, type, checked } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [id]: type === "checkbox" ? checked : value,
+    }));
+  };
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -33,12 +52,17 @@ export default function Login() {
     setError("");
 
     try {
+      const loginData: Pick<User, "email" | "password"> = {
+        email: formData.email,
+        password: formData.password,
+      };
+
       const response = await fetch("/api/auth/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify(loginData),
         credentials: "include",
       });
 
@@ -47,12 +71,23 @@ export default function Login() {
       if (!response.ok) {
         throw new Error(data.error || "Failed to login");
       } else {
-        Cookies.set("token", data.token);
+        // Set cookie options based on remember me
+        const cookieOptions = {
+          expires: formData.rememberMe ? 30 : 1, // 30 days if remember me is checked, 1 day otherwise
+          sameSite: "strict" as const, // Type assertion for TypeScript
+        };
+
+        Cookies.set("token", data.token, cookieOptions);
+
         const userResponse = await fetch("/api/auth/me");
         if (userResponse.ok) {
           const userData = await userResponse.json();
-          if (userData.success) {
-            // Update the auth context directly
+          if (
+            userData.success &&
+            userData.data._id &&
+            userData.data.status &&
+            userData.data.type
+          ) {
             setUser(userData.data);
           }
         }
@@ -92,8 +127,8 @@ export default function Login() {
               <Input
                 id="email"
                 type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                value={formData.email}
+                onChange={handleChange}
                 required
               />
             </div>
@@ -111,16 +146,22 @@ export default function Login() {
               <Input
                 id="password"
                 type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                value={formData.password}
+                onChange={handleChange}
                 required
               />
             </div>
 
             <div className="flex items-center space-x-2">
-              <Checkbox id="remember-me" />
+              <Checkbox
+                id="rememberMe"
+                checked={formData.rememberMe}
+                onCheckedChange={(checked) =>
+                  setFormData((prev) => ({ ...prev, rememberMe: !!checked }))
+                }
+              />
               <Label
-                htmlFor="remember-me"
+                htmlFor="rememberMe"
                 className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
               >
                 Remember me

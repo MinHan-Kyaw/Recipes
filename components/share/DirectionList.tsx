@@ -2,7 +2,7 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { X, Plus } from "lucide-react";
-
+import { AnimatedButton } from "../AnimatedButton";
 interface DirectionListProps {
   directions: string[];
   setDirections: (directions: string[]) => void;
@@ -48,14 +48,13 @@ const DirectionList: React.FC<DirectionListProps> = ({
           </Button>
         </div>
       ))}
-      <Button
-        type="button"
-        variant="outline"
+      <AnimatedButton
         onClick={addDirection}
-        className="text-sm font-medium w-fit text-primary hover:text-primary/90 hover:bg-primary/10 border-primary/20"
+        className="text-sm bg-white hover:bg-primary/5 text-primary border-primary hover:text-primary"
+        icon={<Plus size={16} />}
       >
-        <Plus className="mr-2 h-4 w-4" /> Add Step
-      </Button>
+        Add Step
+      </AnimatedButton>
     </div>
   );
 };
