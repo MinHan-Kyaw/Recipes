@@ -58,7 +58,7 @@ export default function Signup() {
         password: formData.password,
       });
 
-      if (!response.ok) {
+      if (!response.success) {
         throw new Error(response.error || "Failed to sign up");
       }
       router.push("/auth/login?registered=true");

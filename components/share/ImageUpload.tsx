@@ -1,232 +1,190 @@
 "use client";
 
 import React, { useState } from "react";
-import { X, Upload, Image as ImageIcon, AlertCircle } from "lucide-react";
-import { AnimatePresence, motion } from "framer-motion";
+import { Upload, X, Loader2 } from "lucide-react";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
-import { AnimatedButton } from "../AnimatedButton";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
 import { RecipeImage } from "@/lib/types/recipe";
 
-interface ImageUploadProps {
-  images: RecipeImage[];
-  setImages: (images: RecipeImage[]) => void;
-}
-
-export const ImageUpload: React.FC<ImageUploadProps> = ({
+export const ImageUpload = ({
   images,
   setImages,
+  localImages,
+  setLocalImages,
+}: {
+  images: RecipeImage[];
+  setImages: (images: RecipeImage[]) => void;
+  localImages: File[];
+  setLocalImages: (files: File[]) => void;
 }) => {
-  const [dragActive, setDragActive] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [uploadError, setUploadError] = useState("");
 
-  const handleDrag = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (e.type === "dragenter" || e.type === "dragover") {
-      setDragActive(true);
-    } else if (e.type === "dragleave") {
-      setDragActive(false);
-    }
-  };
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
 
-  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setDragActive(false);
+    setUploadError("");
 
-    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      handleFiles(e.dataTransfer.files);
-    }
-  };
+    try {
+      const newImages = [...images];
+      const newLocalImages = [...localImages];
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    e.preventDefault();
-    if (e.target.files && e.target.files.length > 0) {
-      handleFiles(e.target.files);
-    }
-  };
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        // Create a temporary local URL for preview
+        const tempUrl = URL.createObjectURL(file);
 
-  const handleFiles = (files: FileList) => {
-    setError(null);
+        // Add to local images array for later upload
+        newLocalImages.push(file);
 
-    // Validate file types
-    const validFiles = Array.from(files).filter((file) =>
-      file.type.startsWith("image/")
-    );
-
-    if (validFiles.length !== files.length) {
-      setError("Only image files are allowed");
-      return;
-    }
-
-    // Process each valid file
-    validFiles.forEach((file) => {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const url = e.target?.result as string;
-        // In a real app, you would upload the image to a server and get a URL back
-        // For now, we'll use the data URL
-        const newImage: RecipeImage = {
-          url,
+        // Add image preview to the images array
+        newImages.push({
+          url: tempUrl,
+          filename: file.name, // Temporary, will be replaced when uploaded
           caption: "",
-          isPrimary: images.length === 0, // First image is primary by default
-          order: images.length,
-        };
+          isPrimary: newImages.length === 0, // First image is primary by default
+          order: newImages.length,
+          isLocal: true, // Flag to identify local images
+        });
+      }
 
-        setImages([...images, newImage]);
-      };
-      reader.readAsDataURL(file);
-    });
+      // Update the state with the new images
+      setImages(newImages);
+      setLocalImages(newLocalImages);
+    } catch (error) {
+      console.error("Error handling images:", error);
+      setUploadError(
+        error instanceof Error ? error.message : "Failed to handle images"
+      );
+    } finally {
+      // Reset the file input
+      e.target.value = "";
+    }
   };
 
   const removeImage = (index: number) => {
     const newImages = [...images];
-    const wasRemovingPrimary = newImages[index].isPrimary;
+
+    // If it's a local image, also remove from localImages array
+    if (newImages[index].isLocal) {
+      // We need to count how many local images come before this one
+      let localImagePosition = 0;
+      for (let i = 0; i < index; i++) {
+        if (newImages[i].isLocal) {
+          localImagePosition++;
+        }
+      }
+
+      // Now we can remove the correct local image
+      const newLocalImages = [...localImages];
+      newLocalImages.splice(localImagePosition, 1);
+      setLocalImages(newLocalImages);
+    }
+
+    // Revoke object URL to prevent memory leaks
+    if (newImages[index].isLocal && newImages[index].url) {
+      URL.revokeObjectURL(newImages[index].url);
+    }
 
     newImages.splice(index, 1);
 
-    // Reorder remaining images
-    newImages.forEach((img, i) => {
-      img.order = i;
-    });
-
-    // If we removed the primary image, set the first image as primary
-    if (wasRemovingPrimary && newImages.length > 0) {
+    // If we removed the primary image, make the first image primary
+    if (newImages.length > 0 && images[index].isPrimary) {
       newImages[0].isPrimary = true;
     }
 
-    setImages(newImages);
-  };
-
-  const setAsPrimary = (index: number) => {
-    const newImages = [...images];
-
-    // Set all images as not primary
-    newImages.forEach((img) => {
-      img.isPrimary = false;
+    newImages.forEach((img, idx) => {
+      img.order = idx;
     });
 
-    // Set selected image as primary
-    newImages[index].isPrimary = true;
-
     setImages(newImages);
   };
 
-  const updateCaption = (index: number, caption: string) => {
+  const setPrimaryImage = (index: number) => {
     const newImages = [...images];
-    newImages[index].caption = caption;
+    newImages.forEach((img, idx) => {
+      img.isPrimary = idx === index;
+    });
     setImages(newImages);
   };
 
   return (
-    <div className="w-full space-y-4">
-      <Label className="text-lg font-semibold text-gray-800">
-        Recipe Images
-      </Label>
-
-      {/* Drag and drop area */}
-      <div
-        className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
-          dragActive
-            ? "border-primary bg-primary/5"
-            : "border-gray-300 hover:border-gray-400"
-        }`}
-        onDragEnter={handleDrag}
-        onDragLeave={handleDrag}
-        onDragOver={handleDrag}
-        onDrop={handleDrop}
-      >
-        <ImageIcon className="mx-auto h-12 w-12 text-gray-400" />
-        <div className="mt-2">
-          <p className="text-sm text-gray-600">
-            Drag and drop your recipe images here or
-          </p>
-          <label htmlFor="images-upload" className="mt-2 cursor-pointer">
-            <span className="mt-2 inline-flex items-center text-sm font-medium text-primary hover:underline">
-              browse files
-            </span>
-            <Input
-              id="images-upload"
-              type="file"
-              className="sr-only"
-              accept="image/*"
-              multiple
-              onChange={handleChange}
-            />
-          </label>
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h2 className="text-lg font-semibold text-gray-800">Recipe Images</h2>
+        <div className="relative">
+          <input
+            type="file"
+            id="image-upload"
+            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+            onChange={handleFileUpload}
+            accept="image/*"
+            multiple
+          />
+          <Button type="button" variant="outline" className="gap-2">
+            <Upload size={18} />
+            Upload Images
+          </Button>
         </div>
-        <p className="mt-2 text-xs text-gray-500">PNG, JPG, GIF up to 10MB</p>
       </div>
 
-      {error && (
-        <motion.div
-          className="flex items-center gap-2 text-red-500 text-sm"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-        >
-          <AlertCircle size={16} />
-          <span>{error}</span>
-        </motion.div>
+      {uploadError && (
+        <div className="text-red-500 text-sm mt-1">{uploadError}</div>
       )}
 
-      {/* Image preview grid */}
-      {images.length > 0 && (
-        <div className="space-y-4">
-          <h3 className="text-sm font-medium text-gray-700">Selected Images</h3>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <AnimatePresence>
-              {images.map((image, index) => (
-                <motion.div
-                  key={index}
-                  className={`relative border rounded-lg overflow-hidden ${
-                    image.isPrimary ? "ring-2 ring-primary" : ""
-                  }`}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.9 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <div className="relative aspect-video bg-gray-100">
-                    <img
-                      src={image.url}
-                      alt={image.caption || `Recipe image ${index + 1}`}
-                      className="object-cover w-full h-full"
-                    />
-                    <button
-                      onClick={() => removeImage(index)}
-                      className="absolute top-2 right-2 bg-gray-900/60 text-white rounded-full p-1 hover:bg-red-500"
+      {images.length > 0 ? (
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+          {images.map((image, index) => (
+            <div
+              key={index}
+              className={`relative group rounded-lg overflow-hidden border ${
+                image.isPrimary ? "ring-2 ring-blue-500" : ""
+              }`}
+            >
+              <div className="aspect-square relative">
+                <Image
+                  src={image.url}
+                  alt={image.caption || `Recipe image ${index + 1}`}
+                  fill
+                  className="object-cover"
+                  unoptimized={image.isLocal} // Skip Next.js optimization for local files
+                />
+              </div>
+              <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all flex items-center justify-center opacity-0 group-hover:opacity-100">
+                <div className="flex gap-2">
+                  {!image.isPrimary && (
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="secondary"
+                      onClick={() => setPrimaryImage(index)}
+                      className="text-xs"
                     >
-                      <X size={16} />
-                    </button>
-                    {!image.isPrimary && (
-                      <button
-                        onClick={() => setAsPrimary(index)}
-                        className="absolute bottom-2 right-2 bg-gray-900/60 text-white text-xs py-1 px-2 rounded hover:bg-primary"
-                      >
-                        Set as main
-                      </button>
-                    )}
-                    {image.isPrimary && (
-                      <div className="absolute bottom-2 right-2 bg-primary text-white text-xs py-1 px-2 rounded">
-                        Main image
-                      </div>
-                    )}
-                  </div>
-                  <div className="p-2">
-                    <Input
-                      value={image.caption}
-                      onChange={(e) => updateCaption(index, e.target.value)}
-                      placeholder="Add a caption..."
-                      className="text-sm border-none bg-transparent focus:ring-0"
-                    />
-                  </div>
-                </motion.div>
-              ))}
-            </AnimatePresence>
-          </div>
+                      Set as Main
+                    </Button>
+                  )}
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="destructive"
+                    onClick={() => removeImage(index)}
+                    className="text-xs"
+                  >
+                    <X size={16} />
+                  </Button>
+                </div>
+              </div>
+              {image.isPrimary && (
+                <div className="absolute top-2 left-2 bg-blue-500 text-white text-xs px-2 py-1 rounded">
+                  Main
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="border border-dashed rounded-lg p-8 text-center text-gray-500">
+          No images uploaded yet. Add images to showcase your recipe.
         </div>
       )}
     </div>

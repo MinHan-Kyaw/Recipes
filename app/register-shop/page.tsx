@@ -16,12 +16,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Shop } from "@/lib/types/shop";
+import Cookies from "js-cookie";
+import CountrySelector from "@/components/CountrySelector";
 
 export default function RegisterShop() {
   const router = useRouter();
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<Shop>({
     shopName: "",
+    owner: "",
     ownerName: "",
     email: "",
     phone: "",
@@ -33,12 +37,17 @@ export default function RegisterShop() {
     country: "",
     businessHours: "",
     categories: [] as string[],
-    logo: null as File | null,
+    logo: { url: "", filename: "" },
+    isApproved: false,
+    createdAt: new Date(),
   });
 
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [formStep, setFormStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [uploadProgress, setUploadProgress] = useState(false);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -54,12 +63,12 @@ export default function RegisterShop() {
     if (checked) {
       setFormData((prev) => ({
         ...prev,
-        categories: [...prev.categories, category],
+        categories: [...(prev.categories || []), category],
       }));
     } else {
       setFormData((prev) => ({
         ...prev,
-        categories: prev.categories.filter((c) => c !== category),
+        categories: (prev.categories || []).filter((c) => c !== category),
       }));
     }
   };
@@ -67,11 +76,23 @@ export default function RegisterShop() {
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       const file = e.target.files[0];
-      setFormData((prev) => ({
-        ...prev,
-        logo: file,
-      }));
+      setLogoFile(file);
+
+      // Create a preview for the image
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setLogoPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
     }
+  };
+
+  const handleRemoveLogo = () => {
+    setLogoFile(null);
+    setLogoPreview(null);
+    // Reset the file input
+    const fileInput = document.getElementById("logo") as HTMLInputElement;
+    if (fileInput) fileInput.value = "";
   };
 
   const nextStep = () => {
@@ -82,18 +103,76 @@ export default function RegisterShop() {
     setFormStep((prev) => prev - 1);
   };
 
+  const uploadLogo = async () => {
+    if (!logoFile) return null;
+
+    setUploadProgress(true);
+
+    try {
+      const formData = new FormData();
+      formData.append("files", logoFile);
+      formData.append("folder", "Shops");
+
+      const response = await fetch("/api/uploads/bulk", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to upload logo");
+      }
+
+      const result = await response.json();
+
+      if (!result.success || !result.data || result.data.length === 0) {
+        throw new Error("Logo upload failed");
+      }
+
+      return {
+        url: result.data[0].url,
+        filename: result.data[0].filename,
+      };
+    } catch (error) {
+      console.error("Error uploading logo:", error);
+      throw error;
+    } finally {
+      setUploadProgress(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsSubmitting(true);
     setError("");
 
     try {
+      // Upload logo if provided
+      let logoData = formData.logo;
+      if (logoFile) {
+        const uploadedLogo = await uploadLogo();
+        if (!uploadedLogo) {
+          throw new Error("Failed to upload logo");
+        }
+        logoData = uploadedLogo;
+      }
+      const token = Cookies.get("token");
+      const userId = token
+        ? JSON.parse(atob(token.split(".")[1])).userId
+        : null;
+
+      // Prepare final form data with logo URL
+      const finalFormData = {
+        ...formData,
+        logo: logoData,
+        owner: userId,
+      };
+
       const response = await fetch("/api/shops", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(finalFormData),
       });
 
       const result = await response.json();
@@ -170,7 +249,8 @@ export default function RegisterShop() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
-                    <Label htmlFor="shopName">Shop Name *</Label>
+                    <Label htmlFor="shopName">Shop Name </Label>
+                    <span className="text-red-500">*</span>
                     <Input
                       id="shopName"
                       name="shopName"
@@ -181,7 +261,8 @@ export default function RegisterShop() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="ownerName">Owner Name *</Label>
+                    <Label htmlFor="ownerName">Owner Name </Label>
+                    <span className="text-red-500">*</span>
                     <Input
                       id="ownerName"
                       name="ownerName"
@@ -192,7 +273,8 @@ export default function RegisterShop() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="email">Email Address *</Label>
+                    <Label htmlFor="email">Email Address </Label>
+                    <span className="text-red-500">*</span>
                     <Input
                       type="email"
                       id="email"
@@ -204,7 +286,8 @@ export default function RegisterShop() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="phone">Phone Number *</Label>
+                    <Label htmlFor="phone">Phone Number </Label>
+                    <span className="text-red-500">*</span>
                     <Input
                       type="tel"
                       id="phone"
@@ -229,13 +312,50 @@ export default function RegisterShop() {
 
                 <div className="space-y-2">
                   <Label htmlFor="logo">Shop Logo</Label>
-                  <Input
-                    type="file"
-                    id="logo"
-                    accept="image/*"
-                    onChange={handleLogoUpload}
-                    className="cursor-pointer"
-                  />
+                  <div className="flex items-center gap-2">
+                    <Input
+                      type="file"
+                      id="logo"
+                      accept="image/*"
+                      onChange={handleLogoUpload}
+                      className="cursor-pointer flex-1"
+                    />
+                    {logoPreview && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={handleRemoveLogo}
+                        size="sm"
+                        className="text-red-500"
+                      >
+                        Remove
+                      </Button>
+                    )}
+                  </div>
+
+                  {/* Logo preview */}
+                  {logoPreview && (
+                    <div className="mt-4">
+                      <div className="w-32 h-32 border rounded overflow-hidden relative group">
+                        <img
+                          src={logoPreview}
+                          alt="Logo preview"
+                          className="w-full h-full object-cover"
+                        />
+                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="destructive"
+                            onClick={handleRemoveLogo}
+                            className="text-white"
+                          >
+                            Delete
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <div className="pt-4 flex justify-end">
@@ -251,7 +371,8 @@ export default function RegisterShop() {
                 <h2 className="text-xl font-semibold">Location Information</h2>
 
                 <div className="space-y-2">
-                  <Label htmlFor="address">Street Address *</Label>
+                  <Label htmlFor="address">Street Address </Label>
+                  <span className="text-red-500">*</span>
                   <Input
                     id="address"
                     name="address"
@@ -263,7 +384,8 @@ export default function RegisterShop() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
-                    <Label htmlFor="city">City *</Label>
+                    <Label htmlFor="city">City </Label>
+                    <span className="text-red-500">*</span>
                     <Input
                       id="city"
                       name="city"
@@ -274,7 +396,8 @@ export default function RegisterShop() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="state">State/Province *</Label>
+                    <Label htmlFor="state">State/Province </Label>
+                    <span className="text-red-500">*</span>
                     <Input
                       id="state"
                       name="state"
@@ -285,7 +408,8 @@ export default function RegisterShop() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="zipCode">ZIP/Postal Code *</Label>
+                    <Label htmlFor="zipCode">ZIP/Postal Code </Label>
+                    <span className="text-red-500">*</span>
                     <Input
                       id="zipCode"
                       name="zipCode"
@@ -294,28 +418,13 @@ export default function RegisterShop() {
                       required
                     />
                   </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="country">Country *</Label>
-                    <Select
-                      onValueChange={(value) =>
-                        setFormData((prev) => ({ ...prev, country: value }))
-                      }
-                      value={formData.country}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select a country" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="USA">United States</SelectItem>
-                        <SelectItem value="CAN">Canada</SelectItem>
-                        <SelectItem value="MEX">Mexico</SelectItem>
-                        <SelectItem value="GBR">United Kingdom</SelectItem>
-                        <SelectItem value="AUS">Australia</SelectItem>
-                        {/* Add more countries as needed */}
-                      </SelectContent>
-                    </Select>
-                  </div>
+                  {/* Country selector */}
+                  <CountrySelector
+                    value={formData.country}
+                    onChange={(value) =>
+                      setFormData((prev) => ({ ...prev, country: value }))
+                    }
+                  />
                 </div>
 
                 <div className="pt-4 flex justify-between">
@@ -357,7 +466,7 @@ export default function RegisterShop() {
                       >
                         <Checkbox
                           id={`category-${category}`}
-                          checked={formData.categories.includes(category)}
+                          checked={formData.categories?.includes(category)}
                           onCheckedChange={(checked) =>
                             handleCategoryChange(category, checked as boolean)
                           }
@@ -378,7 +487,11 @@ export default function RegisterShop() {
                     Back
                   </Button>
                   <Button type="submit" disabled={isSubmitting}>
-                    {isSubmitting ? "Submitting..." : "Register Shop"}
+                    {isSubmitting
+                      ? uploadProgress
+                        ? "Uploading Logo..."
+                        : "Submitting..."
+                      : "Register Shop"}
                   </Button>
                 </div>
               </div>

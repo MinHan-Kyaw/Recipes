@@ -12,7 +12,7 @@ export async function signupUser(userData: User) {
 
     const data = await response.json();
 
-    if (!response.ok) {
+    if (!response) {
       throw new Error(data.error || "Failed to sign up");
     }
 

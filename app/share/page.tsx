@@ -105,6 +105,7 @@ const CreateRecipe: React.FC = () => {
   const router = useRouter();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [localImages, setLocalImages] = useState<File[]>([]);
 
   const [recipe, setRecipe] = useState<Recipe>({
     title: "",
@@ -138,10 +139,38 @@ const CreateRecipe: React.FC = () => {
     }));
   };
 
+  // Function to upload images to DigitalOcean Spaces
+  const uploadImages = async () => {
+    if (localImages.length === 0) return [];
+
+    try {
+      const formData = new FormData();
+      localImages.forEach((file) => {
+        formData.append("files", file);
+      });
+
+      const response = await fetch("/api/uploads/bulk", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to upload images");
+      }
+
+      const result = await response.json();
+      return result.data;
+    } catch (error) {
+      console.error("Error uploading images:", error);
+      throw error;
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle form submission
     setIsSubmitting(true);
+
     try {
       // Validate required fields
       const requiredFields = [
@@ -165,24 +194,94 @@ const CreateRecipe: React.FC = () => {
           `Please fill in all required fields: ${missingFields.join(", ")}`
         );
       }
+
+      // Process and upload images if there are any local images
+      let finalImages = [...recipe.images];
+
+      if (localImages.length > 0) {
+        // First, find which images in the recipe are local
+        const localImageIndexes = recipe.images
+          .map((img, index) => (img.isLocal ? index : -1))
+          .filter((index) => index !== -1);
+
+        // Upload the local images
+        const uploadedImages = await uploadImages();
+
+        if (!uploadedImages || uploadedImages.length !== localImages.length) {
+          throw new Error("Some images failed to upload");
+        }
+
+        // Replace local images with uploaded ones
+        finalImages = recipe.images.map((img, index) => {
+          if (img.isLocal) {
+            const localIndex = localImageIndexes.indexOf(index);
+            if (localIndex !== -1 && uploadedImages[localIndex]) {
+              return {
+                ...img,
+                url: uploadedImages[localIndex].url,
+                filename: uploadedImages[localIndex].filename,
+                isLocal: false,
+              };
+            }
+          }
+          return img;
+        });
+      }
+
+      // Get user ID from token
       const token = Cookies.get("token");
       const userId = token
         ? JSON.parse(atob(token.split(".")[1])).userId
         : null;
-      // Make sure author is set
+
+      // Prepare final recipe data with uploaded images
       const recipeData = {
         ...recipe,
+        images: finalImages.map((img) => ({
+          url: img.url,
+          filename: img.filename || "",
+          caption: img.caption || "",
+          isPrimary: img.isPrimary,
+          order: img.order,
+        })),
         author: userId || recipe.author,
       };
+
+      // Create the recipe
       const result = await createRecipe(recipeData);
+
       if (!result) {
         throw new Error("Failed to create recipe");
       }
+
       toast({
         title: "Recipe Created",
         description: "Your recipe has been created successfully.",
       });
 
+      // Revoke all object URLs to prevent memory leaks
+      recipe.images.forEach((img) => {
+        if (img.isLocal && img.url) {
+          URL.revokeObjectURL(img.url);
+        }
+      });
+      // Clear the recipe state and local images
+      setRecipe({
+        title: "",
+        description: "",
+        ingredients: [],
+        directions: [],
+        servings: "",
+        yield: "",
+        prepTime: 0,
+        cookTime: 0,
+        notes: "",
+        images: [],
+        videoUrl: "",
+        category: "",
+        cuisine: "",
+      });
+      setLocalImages([]);
       // Redirect to the recipe page or recipes list
       router.push("/share");
     } catch (error) {
@@ -197,10 +296,15 @@ const CreateRecipe: React.FC = () => {
     } finally {
       setIsSubmitting(false);
     }
-    console.log(recipe);
   };
 
   const handleCancelClick = () => {
+    // Revoke all object URLs to prevent memory leaks
+    recipe.images.forEach((img) => {
+      if (img.isLocal && img.url) {
+        URL.revokeObjectURL(img.url);
+      }
+    });
     router.push(`/meals`);
   };
 
@@ -243,13 +347,15 @@ const CreateRecipe: React.FC = () => {
             rows={4}
           />
 
-          {/* Recipe Images - New section */}
+          {/* Recipe Images */}
           <div className="mb-6">
             <ImageUpload
               images={recipe.images}
               setImages={(images: RecipeImage[]) =>
                 setRecipe((prev) => ({ ...prev, images }))
               }
+              localImages={localImages}
+              setLocalImages={setLocalImages}
             />
           </div>
 
@@ -285,7 +391,7 @@ const CreateRecipe: React.FC = () => {
 
           <Separator className="my-6" />
 
-          {/* Video Link - New field */}
+          {/* Video Link */}
           <div className="mb-6">
             <VideoLink
               videoUrl={recipe.videoUrl}

@@ -53,8 +53,7 @@ export default function Login() {
 
     try {
       const response = await loginUser(formData.email, formData.password);
-
-      if (!response.ok) {
+      if (!response.success) {
         throw new Error(response.error || "Failed to login");
       } else {
         // Set cookie options based on remember me
@@ -66,6 +65,7 @@ export default function Login() {
         Cookies.set("token", response.token, cookieOptions);
 
         const userResponse = await fetch("/api/auth/me");
+        
         if (userResponse.ok) {
           const userData = await userResponse.json();
           if (

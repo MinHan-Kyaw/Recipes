@@ -3,7 +3,11 @@ import mongoose from "mongoose";
 const RecipeImageSchema = new mongoose.Schema({
   url: {
     type: String,
-    required: [true, "Please provide an image URL"],
+    default: "",
+  },
+  filename: {
+    type: String,
+    default: "",
   },
   caption: {
     type: String,
@@ -43,7 +47,6 @@ const RecipeSchema = new mongoose.Schema({
   },
   yield: {
     type: String,
-    required: [true, "Please provide the recipe yield"],
   },
   prepTime: {
     type: Number,
@@ -51,7 +54,6 @@ const RecipeSchema = new mongoose.Schema({
   },
   cookTime: {
     type: Number,
-    required: [true, "Please provide cooking time in minutes"],
   },
   notes: {
     type: String,

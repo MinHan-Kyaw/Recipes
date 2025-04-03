@@ -1,14 +1,15 @@
-// /lib/types/recipe.ts
+// lib/types/recipe.ts
 export interface RecipeImage {
-  id?: string;
   url: string;
+  filename?: string;
   caption: string;
   isPrimary: boolean;
   order: number;
+  isLocal?: boolean; // Flag to identify local images that need uploading
 }
 
 export interface Recipe {
-  id?: string;
+  _id?: string;
   title: string;
   description: string;
   ingredients: string[];

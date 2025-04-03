@@ -1,5 +1,16 @@
 import mongoose from "mongoose";
 
+const ShopLogo = new mongoose.Schema({
+  url: {
+    type: String,
+    default: "",
+  },
+  filename: {
+    type: String,
+    default: "",
+  }
+});
+
 const ShopSchema = new mongoose.Schema({
   shopName: {
     type: String,
@@ -53,8 +64,9 @@ const ShopSchema = new mongoose.Schema({
   categories: {
     type: [String],
   },
-  logoUrl: {
-    type: String,
+  logo: {
+    type: ShopLogo,
+    default: {},
   },
   isApproved: {
     type: Boolean,
