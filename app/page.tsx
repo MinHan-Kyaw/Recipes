@@ -72,12 +72,12 @@ export default function Home() {
               How it works
             </h2>
             <p className="mb-4 text-2xl text-emerald-600">
-              NextLevel Food is a platform for foodies to share their favorite
+              Recipes is a platform for foodies to share their favorite
               recipes with the world. It&apos;s a place to discover new dishes,
               and to connect with other food lovers.
             </p>
             <p className="text-2xl text-emerald-600">
-              NextLevel Food is a place to discover new dishes, and to connect
+              Recipes is a place to discover new dishes, and to connect
               with other food lovers.
             </p>
           </CardContent>

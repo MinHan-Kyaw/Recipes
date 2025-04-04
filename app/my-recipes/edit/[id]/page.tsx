@@ -1,24 +1,22 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useRouter, useParams } from "next/navigation";
 import { X, ChefHat, Pencil, Clock, Users, Book, Loader2 } from "lucide-react";
-import { IngredientList } from "@/components/share/IngredientList";
-import DirectionList from "@/components/share/DirectionList";
-import { useRouter } from "next/navigation";
-
-// Import shadcn components
+import { IngredientList } from "@/components/recipes/IngredientList";
+import DirectionList from "@/components/recipes/DirectionList";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { VideoLink } from "@/components/share/VideoLink";
-import { ImageUpload } from "@/components/share/ImageUpload";
+import { VideoLink } from "@/components/recipes/VideoLink";
+import { ImageUpload } from "@/components/recipes/ImageUpload";
 import { Recipe, RecipeImage } from "@/lib/types/recipe";
 import { useToast } from "@/hooks/use-toast";
-import { createRecipe } from "@/lib/api/recipes";
-import Cookies from "js-cookie";
+import { fetchRecipeById, updateRecipe } from "@/lib/api/recipes";
+import { useAuth } from "@/components/AuthProvider";
 
 // Shadcn form field component
 const FormField: React.FC<{
@@ -100,10 +98,13 @@ const TextareaField: React.FC<{
   );
 };
 
-// Main component
-const CreateRecipe: React.FC = () => {
+export default function EditRecipe() {
   const router = useRouter();
+  const params = useParams();
+  const recipeId = params.id as string;
   const { toast } = useToast();
+  const { user, loading: authLoading } = useAuth();
+  const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [localImages, setLocalImages] = useState<File[]>([]);
 
@@ -117,12 +118,52 @@ const CreateRecipe: React.FC = () => {
     prepTime: 0,
     cookTime: 0,
     notes: "",
-    // New fields
     images: [],
     videoUrl: "",
     category: "",
     cuisine: "",
   });
+
+  useEffect(() => {
+    async function loadRecipe() {
+      if (!recipeId) return;
+
+      try {
+        setIsLoading(true);
+        const recipeData = await fetchRecipeById(recipeId);
+
+        if (!recipeData) {
+          throw new Error("Recipe not found");
+        }
+
+        // Make sure the user is the author of this recipe
+        if (user && recipeData.author !== user._id) {
+          toast({
+            title: "Unauthorized",
+            description: "You don't have permission to edit this recipe.",
+            variant: "destructive",
+          });
+          router.push("/my-recipes");
+          return;
+        }
+
+        setRecipe(recipeData);
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Failed to load recipe. Please try again.",
+          variant: "destructive",
+        });
+        router.push("/my-recipes");
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    if (!authLoading && user) {
+      loadRecipe();
+    }
+  }, [recipeId, user, authLoading, router, toast]);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -228,12 +269,6 @@ const CreateRecipe: React.FC = () => {
         });
       }
 
-      // Get user ID from token
-      const token = Cookies.get("token");
-      const userId = token
-        ? JSON.parse(atob(token.split(".")[1])).userId
-        : null;
-
       // Prepare final recipe data with uploaded images
       const recipeData = {
         ...recipe,
@@ -244,19 +279,18 @@ const CreateRecipe: React.FC = () => {
           isPrimary: img.isPrimary,
           order: img.order,
         })),
-        author: userId || recipe.author,
       };
 
-      // Create the recipe
-      const result = await createRecipe(recipeData);
+      // Update the recipe
+      const result = await updateRecipe(recipeId, recipeData);
 
       if (!result) {
-        throw new Error("Failed to create recipe");
+        throw new Error("Failed to update recipe");
       }
 
       toast({
-        title: "Recipe Created",
-        description: "Your recipe has been created successfully.",
+        title: "Recipe Updated",
+        description: "Your recipe has been updated successfully.",
       });
 
       // Revoke all object URLs to prevent memory leaks
@@ -265,25 +299,9 @@ const CreateRecipe: React.FC = () => {
           URL.revokeObjectURL(img.url);
         }
       });
-      // Clear the recipe state and local images
-      setRecipe({
-        title: "",
-        description: "",
-        ingredients: [],
-        directions: [],
-        servings: "",
-        yield: "",
-        prepTime: 0,
-        cookTime: 0,
-        notes: "",
-        images: [],
-        videoUrl: "",
-        category: "",
-        cuisine: "",
-      });
-      setLocalImages([]);
-      // Redirect to the recipe page or recipes list
-      router.push("/share");
+
+      // Redirect to the recipe details page
+      router.push(`/recipe/${recipeId}`);
     } catch (error) {
       toast({
         title: "Error",
@@ -305,14 +323,27 @@ const CreateRecipe: React.FC = () => {
         URL.revokeObjectURL(img.url);
       }
     });
-    router.push(`/meals`);
+    router.push(`/recipe/${recipeId}`);
   };
+
+  if (authLoading || isLoading) {
+    return (
+      <div className="flex justify-center items-center min-h-[70vh]">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (!user) {
+    router.push("/auth/login");
+    return null;
+  }
 
   return (
     <Card className="max-w-3xl mx-auto shadow-sm">
       <CardHeader>
         <CardTitle className="text-2xl font-bold text-gray-800">
-          Add a Recipe
+          Edit Recipe
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -512,7 +543,7 @@ const CreateRecipe: React.FC = () => {
               ) : (
                 <>
                   <Pencil size={18} />
-                  {"Save Recipe"}
+                  {"Update Recipe"}
                 </>
               )}
             </Button>
@@ -521,6 +552,4 @@ const CreateRecipe: React.FC = () => {
       </CardContent>
     </Card>
   );
-};
-
-export default CreateRecipe;
+}

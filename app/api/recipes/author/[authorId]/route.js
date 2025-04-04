@@ -2,20 +2,13 @@ import { NextResponse } from "next/server";
 import dbConnect from "@/lib/mongodb";
 import Recipe from "@/models/Recipe";
 
+// GET /api/recipes/author/[authorId] - Get recipes by author ID
 export async function GET(request, { params }) {
   try {
     await dbConnect();
 
-    const { authorId } = params;
+    const authorId = params.authorId;
 
-    if (!authorId) {
-      return NextResponse.json(
-        { success: false, error: "Author ID is required" },
-        { status: 400 }
-      );
-    }
-
-    // Find all recipes by the specified author
     const recipes = await Recipe.find({ author: authorId }).sort({
       createdAt: -1,
     });

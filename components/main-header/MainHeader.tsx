@@ -67,10 +67,10 @@ export default function MainHeader() {
         <nav>
           <ul className="list-none m-0 p-0 flex items-center">
             <li className="mr-6">
-              <NavLink href="/meals">Browse Meals</NavLink>
+              <NavLink href="/recipes">Browse Meals</NavLink>
             </li>
             <li className="mr-6">
-              <NavLink href="/share">Share Recipe</NavLink>
+              <NavLink href="/recipes/create">Share Recipe</NavLink>
             </li>
             <li className="mr-6">
               <NavLink href="/register-shop">Register Shop</NavLink>
@@ -117,6 +117,15 @@ export default function MainHeader() {
                         onClick={() => setIsProfileOpen(false)}
                       >
                         Your Profile
+                      </Link>
+                      
+                      {/* Add My Recipes link */}
+                      <Link
+                        href="/my-recipes"
+                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                        onClick={() => setIsProfileOpen(false)}
+                      >
+                        My Recipes
                       </Link>
 
                       {user.shops && user.shops.length > 0 && (
