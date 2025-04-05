@@ -8,7 +8,7 @@ const ShopLogo = new mongoose.Schema({
   filename: {
     type: String,
     default: "",
-  }
+  },
 });
 
 const ShopSchema = new mongoose.Schema({
@@ -67,6 +67,19 @@ const ShopSchema = new mongoose.Schema({
   logo: {
     type: ShopLogo,
     default: {},
+  },
+  location: {
+    type: {
+      lat: {
+        type: Number,
+        required: [true, "Latitude is required"],
+      },
+      lng: {
+        type: Number,
+        required: [true, "Longitude is required"],
+      },
+    },
+    default: { lat: 0, lng: 0 },
   },
   isApproved: {
     type: Boolean,

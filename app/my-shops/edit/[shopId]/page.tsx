@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -10,12 +10,13 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Shop } from "@/lib/types/shop";
-import Cookies from "js-cookie";
 import CountrySelector from "@/components/CountrySelector";
+import { Loader } from "lucide-react";
 import MapSelector from "@/components/MapSelector";
 
-export default function RegisterShop() {
+export default function EditShop({ params }: { params: { shopId: string } }) {
   const router = useRouter();
+  const { shopId } = params;
 
   const [formData, setFormData] = useState<Shop>({
     shopName: "",
@@ -41,9 +42,57 @@ export default function RegisterShop() {
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [formStep, setFormStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
   const [uploadProgress, setUploadProgress] = useState(false);
   const [useMap, setUseMap] = useState(false);
+
+  // Shop categories
+  const shopCategories = [
+    "Restaurant",
+    "Cafe",
+    "Bakery",
+    "Food Truck",
+    "Catering",
+    "Grocery",
+    "Specialty Foods",
+    "Other",
+  ];
+
+  // Fetch shop data
+  useEffect(() => {
+    const fetchShopData = async () => {
+      try {
+        const response = await fetch(`/api/shops/${shopId}`);
+        const result = await response.json();
+
+        if (!response.ok) {
+          throw new Error(result.error || "Failed to fetch shop data");
+        }
+
+        if (result.success && result.data) {
+          const shopData = result.data;
+          setFormData({
+            ...shopData,
+            // Ensure location has default values if not present
+            location: shopData.location || { lat: 0, lng: 0 },
+          });
+
+          // Set logo preview if available
+          if (shopData.logo && shopData.logo.url) {
+            setLogoPreview(shopData.logo.url);
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching shop data:", error);
+        setError("Failed to load shop data. Please try again.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchShopData();
+  }, [shopId]);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -52,6 +101,28 @@ export default function RegisterShop() {
     setFormData((prev) => ({
       ...prev,
       [name]: value,
+    }));
+  };
+
+  // Handle location input changes
+  const handleLocationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    const numValue = parseFloat(value) || 0;
+
+    setFormData((prev) => ({
+      ...prev,
+      location: {
+        ...prev.location,
+        [name === "lat" ? "lat" : "lng"]: numValue,
+      },
+    }));
+  };
+
+  // Update location from map
+  const handleMapLocationChange = (lat: number, lng: number) => {
+    setFormData((prev) => ({
+      ...prev,
+      location: { lat, lng },
     }));
   };
 
@@ -86,30 +157,13 @@ export default function RegisterShop() {
   const handleRemoveLogo = () => {
     setLogoFile(null);
     setLogoPreview(null);
+    setFormData((prev) => ({
+      ...prev,
+      logo: { url: "", filename: "" },
+    }));
     // Reset the file input
     const fileInput = document.getElementById("logo") as HTMLInputElement;
     if (fileInput) fileInput.value = "";
-  };
-
-  const handleLocationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    const numValue = parseFloat(value) || 0;
-
-    setFormData((prev) => ({
-      ...prev,
-      location: {
-        ...prev.location,
-        [name === "lat" ? "lat" : "lng"]: numValue,
-      },
-    }));
-  };
-
-  // Update location from map
-  const handleMapLocationChange = (lat: number, lng: number) => {
-    setFormData((prev) => ({
-      ...prev,
-      location: { lat, lng },
-    }));
   };
 
   const nextStep = () => {
@@ -172,20 +226,15 @@ export default function RegisterShop() {
         }
         logoData = uploadedLogo;
       }
-      const token = Cookies.get("token");
-      const userId = token
-        ? JSON.parse(atob(token.split(".")[1])).userId
-        : null;
 
       // Prepare final form data with logo URL
       const finalFormData = {
         ...formData,
         logo: logoData,
-        owner: userId,
       };
 
-      const response = await fetch("/api/shops", {
-        method: "POST",
+      const response = await fetch(`/api/shops/${shopId}`, {
+        method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
@@ -195,11 +244,11 @@ export default function RegisterShop() {
       const result = await response.json();
 
       if (!response.ok) {
-        throw new Error(result.error || "Failed to register shop");
+        throw new Error(result.error || "Failed to update shop");
       }
 
-      // Redirect to success page
-      router.push("/register-shop/success");
+      // Redirect to the shop page or shops list
+      router.push("/my-shops");
     } catch (error) {
       console.error("Error submitting form:", error);
       setError(
@@ -212,24 +261,21 @@ export default function RegisterShop() {
     }
   };
 
-  // Shop categories
-  const shopCategories = [
-    "Restaurant",
-    "Cafe",
-    "Bakery",
-    "Food Truck",
-    "Catering",
-    "Grocery",
-    "Specialty Foods",
-    "Other",
-  ];
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center h-[60vh]">
+        <Loader className="h-8 w-8 animate-spin" />
+        <span className="ml-2">Loading shop data...</span>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-4xl mx-auto p-6 py-12">
       <Card>
         <CardHeader className="bg-primary/5">
           <CardTitle className="text-3xl font-bold text-center text-primary">
-            Register Your Shop
+            Edit Your Shop
           </CardTitle>
         </CardHeader>
         <CardContent className="pt-6">
@@ -443,6 +489,7 @@ export default function RegisterShop() {
                     }
                   />
                 </div>
+
                 {/* Location Coordinates */}
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
@@ -567,8 +614,8 @@ export default function RegisterShop() {
                     {isSubmitting
                       ? uploadProgress
                         ? "Uploading Logo..."
-                        : "Submitting..."
-                      : "Register Shop"}
+                        : "Updating..."
+                      : "Update Shop"}
                   </Button>
                 </div>
               </div>

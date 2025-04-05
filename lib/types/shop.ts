@@ -19,6 +19,10 @@ export interface Shop {
   businessHours?: string;
   categories?: string[];
   logo?: ShopLogo;
+  location: {
+    lat: number;
+    lng: number;
+  };
   isApproved: boolean;
   createdAt: Date;
 }
