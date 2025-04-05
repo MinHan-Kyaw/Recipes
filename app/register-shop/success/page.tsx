@@ -28,7 +28,7 @@ export default function RegistrationSuccess() {
         </Link>
 
         <Link
-          href="/meals"
+          href="/recipes"
           className="px-6 py-3 bg-white border border-[#2e8b57] text-[#2e8b57] rounded-md hover:bg-gray-50 transition-colors"
         >
           Browse Meals
