@@ -3,6 +3,7 @@ import ClientWrapper from "@/components/ClientWrapper";
 import { AuthProvider } from "@/components/AuthProvider";
 import { ReactNode } from "react";
 import "./globals.css";
+import { Toaster } from "@/components/ui/toaster";
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
@@ -11,6 +12,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <AuthProvider>
           <ConditionalHeader />
           <ClientWrapper>{children}</ClientWrapper>
+          <Toaster />
         </AuthProvider>
       </body>
     </html>

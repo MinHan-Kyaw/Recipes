@@ -17,6 +17,10 @@ const UserSchema = new mongoose.Schema({
     required: [true, "Please provide a password"],
     minlength: [6, "Password should be at least 6 characters"],
   },
+  avatar: {
+    type: String,
+    default: "", // Empty string as default (no avatar)
+  },
   type: {
     type: String,
     enum: ["admin", "user"],

@@ -1,170 +1,392 @@
 "use client";
 import Link from "next/link";
 import Image from "next/image";
-import React, { useState, useRef, useEffect } from "react";
+import React, { useEffect, useState } from "react";
+import { motion } from "framer-motion";
 import logoImg from "@/assets/logo.png";
-import MainHeaderBackground from "./MainHeaderBackground";
-import NavLink from "./NavLink";
 import { useAuth } from "@/components/AuthProvider";
+import MainHeaderBackground from "./MainHeaderBackground";
+import {
+  Menu,
+  Search,
+  LogOut,
+  UserCircle,
+  PlusCircle,
+  Store,
+  Bookmark,
+  Settings,
+  ShoppingBag,
+} from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { cn } from "@/lib/utils";
 
 export default function MainHeader() {
   const { user, loading, logout, refreshUser } = useAuth();
-  const [isProfileOpen, setIsProfileOpen] = useState(false);
-  const dropdownRef = useRef<HTMLLIElement | null>(null);
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
-    // Only refresh if we're not currently loading
     if (!loading) {
       refreshUser();
     }
+
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 10);
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
   }, [refreshUser, loading]);
 
-  // Function to get first letter of user's name
+  // Get first letter of user's name for the avatar
   const getInitial = (name: string) => {
     return name ? name.charAt(0).toUpperCase() : "";
   };
 
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node)
-      ) {
-        setIsProfileOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, []);
+  // Animation variants
+  const logoAnimation = {
+    initial: { scale: 0.9, opacity: 0 },
+    animate: { scale: 1, opacity: 1, transition: { duration: 0.5 } },
+  };
+
+  const navItemAnimation = {
+    initial: { y: -20, opacity: 0 },
+    animate: (i: number) => ({
+      y: 0,
+      opacity: 1,
+      transition: {
+        duration: 0.3,
+        delay: i * 0.1,
+      },
+    }),
+  };
 
   return (
     <>
       <MainHeaderBackground />
-      <header className="flex justify-between items-center px-4 py-8 md:px-[10%]">
-        <Link
-          href="/"
-          className="flex items-center justify-center gap-8 no-underline font-bold font-['Montserrat'] tracking-wider uppercase text-2xl"
+      <header
+        className={cn(
+          "fixed top-0 left-0 right-0 flex justify-between items-center px-4 py-4 md:px-[10%] transition-all duration-300 z-50",
+          isScrolled
+            ? "bg-white/90 backdrop-blur-md shadow-sm"
+            : "bg-transparent"
+        )}
+      >
+        <motion.div
+          initial="initial"
+          animate="animate"
+          variants={logoAnimation}
         >
-          <Image
-            src={logoImg.src}
-            alt="A plate with food on it."
-            priority
-            width={1024}
-            height={1024}
-            className="w-20 h-20 object-contain"
-            style={{
-              filter: "drop-shadow(0 0 0.75rem rgba(46, 139, 87, 0.3))",
-            }}
-          />
-          <span className="text-primary transition-all duration-300 ease-in-out hover-food-gradient">
-            NextLevel Food
-          </span>
-        </Link>
+          <Link
+            href="/"
+            className="flex items-center gap-3 no-underline font-bold font-['Montserrat'] tracking-wider text-xl lg:text-2xl"
+          >
+            <Image
+              src={logoImg.src}
+              alt="NextLevel Food logo"
+              priority
+              width={48}
+              height={48}
+              className="w-10 h-10 md:w-12 md:h-12 object-contain"
+              style={{
+                filter: "drop-shadow(0 0 0.5rem rgba(46, 139, 87, 0.3))",
+              }}
+            />
+            <motion.span
+              className="text-primary hidden sm:inline-block"
+              whileHover={{
+                scale: 1.05,
+                background: "linear-gradient(90deg, #2E8B57, #87CEEB)",
+                backgroundClip: "text",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+              }}
+              transition={{ duration: 0.2 }}
+            >
+              NextLevel Food
+            </motion.span>
+          </Link>
+        </motion.div>
 
-        <nav>
-          <ul className="list-none m-0 p-0 flex items-center">
-            <li className="mr-6">
-              <NavLink href="/recipes">Browse Meals</NavLink>
-            </li>
-            <li className="mr-6">
-              <NavLink href="/recipes/create">Share Recipe</NavLink>
-            </li>
-            <li className="mr-6">
-              <NavLink href="/register-shop">Register Shop</NavLink>
-            </li>
+        {/* Desktop Navigation */}
+        <div className="hidden md:flex items-center gap-4">
+          <motion.div
+            custom={0}
+            initial="initial"
+            animate="animate"
+            variants={navItemAnimation}
+          >
+            <Button
+              variant="ghost"
+              className="rounded-full px-4 hover:bg-primary/10 hover:text-primary flex items-center gap-2 font-medium"
+              asChild
+            >
+              <Link href="/recipes">
+                <Search className="w-4 h-4" />
+                Browse Meals
+              </Link>
+            </Button>
+          </motion.div>
 
-            {!loading && (
-              <li
-                className={`${user ? "ml-6" : "ml-6"} relative`}
-                ref={dropdownRef}
-              >
-                {user ? (
-                  <button
-                    onClick={() => setIsProfileOpen(!isProfileOpen)}
-                    className="flex items-center justify-center w-10 h-10 bg-primary text-white rounded-full hover:bg-primary/80 transition-colors font-medium"
-                    aria-label="Profile menu"
-                    title={user.name}
-                  >
-                    {getInitial(user.name)}
-                  </button>
-                ) : (
-                  <NavLink
-                    href="/auth/login"
-                    className="bg-primary text-white py-2 px-4 rounded-full hover:bg-primary/80 transition-colors"
-                  >
-                    Login
-                  </NavLink>
-                )}
-
-                {isProfileOpen && user && (
-                  <div className="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10">
-                    <div className="py-1 px-3 border-b border-gray-100">
-                      <p className="text-sm font-medium text-gray-800">
-                        {user.name}
-                      </p>
+          {!loading && (
+            <motion.div
+              custom={1}
+              initial="initial"
+              animate="animate"
+              variants={navItemAnimation}
+            >
+              {user ? (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <div className="flex items-center gap-2 bg-white/80 hover:bg-white/90 px-3 py-2 rounded-full cursor-pointer transition-all border border-gray-100 shadow-sm">
+                      <Avatar className="w-8 h-8 border-2 border-primary/20">
+                        <AvatarImage src={user.avatar} alt={user.name} />
+                        <AvatarFallback className="bg-primary text-primary-foreground font-medium">
+                          {getInitial(user.name)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span className="text-sm font-medium text-gray-700">
+                        {user.name.split(" ")[0]}
+                      </span>
                     </div>
-                    <div
-                      className="py-1"
-                      role="menu"
-                      aria-orientation="vertical"
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent
+                    align="end"
+                    className="w-64 p-2 rounded-xl shadow-lg border-gray-100"
+                  >
+                    <div className="p-3 flex items-center gap-3">
+                      <Avatar className="w-12 h-12 border-2 border-primary/20">
+                        <AvatarImage src={user.avatar} alt={user.name} />
+                        <AvatarFallback className="bg-primary text-primary-foreground text-lg font-medium">
+                          {getInitial(user.name)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex flex-col">
+                        <DropdownMenuLabel className="p-0 font-bold">
+                          {user.name}
+                        </DropdownMenuLabel>
+                        <span className="text-xs text-gray-500">
+                          {user.email}
+                        </span>
+                      </div>
+                    </div>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      asChild
+                      className="flex items-center gap-2 py-2 cursor-pointer"
                     >
-                      <Link
-                        href="/profile"
-                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                        onClick={() => setIsProfileOpen(false)}
-                      >
+                      <Link href="/profile">
+                        <UserCircle className="w-4 h-4" />
                         Your Profile
                       </Link>
-
-                      {/* Add My Recipes link */}
-                      <Link
-                        href="/my-recipes"
-                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                        onClick={() => setIsProfileOpen(false)}
-                      >
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      asChild
+                      className="flex items-center gap-2 py-2 cursor-pointer"
+                    >
+                      <Link href="/recipes/create">
+                        <PlusCircle className="w-4 h-4" />
+                        Share Recipe
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      asChild
+                      className="flex items-center gap-2 py-2 cursor-pointer"
+                    >
+                      <Link href="/register-shop">
+                        <Store className="w-4 h-4" />
+                        Register Shop
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      asChild
+                      className="flex items-center gap-2 py-2 cursor-pointer"
+                    >
+                      <Link href="/my-recipes">
+                        <Bookmark className="w-4 h-4" />
                         My Recipes
                       </Link>
+                    </DropdownMenuItem>
 
-                      {user.shops && user.shops.length > 0 && (
-                        <Link
-                          href="/my-shops"
-                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                          onClick={() => setIsProfileOpen(false)}
-                        >
+                    {user.shops && user.shops.length > 0 && (
+                      <DropdownMenuItem
+                        asChild
+                        className="flex items-center gap-2 py-2 cursor-pointer"
+                      >
+                        <Link href="/my-shops">
+                          <ShoppingBag className="w-4 h-4" />
                           My Shops
                         </Link>
-                      )}
+                      </DropdownMenuItem>
+                    )}
 
-                      {user.type === "admin" && (
-                        <Link
-                          href="/admin-dashboard"
-                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                          onClick={() => setIsProfileOpen(false)}
-                        >
+                    {user.type === "admin" && (
+                      <DropdownMenuItem
+                        asChild
+                        className="flex items-center gap-2 py-2 cursor-pointer"
+                      >
+                        <Link href="/admin-dashboard">
+                          <Settings className="w-4 h-4" />
                           Admin Dashboard
                         </Link>
-                      )}
+                      </DropdownMenuItem>
+                    )}
 
-                      <button
-                        onClick={() => {
-                          setIsProfileOpen(false);
-                          logout?.();
-                        }}
-                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                      >
-                        Logout
-                      </button>
-                    </div>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      onClick={logout}
+                      className="flex items-center gap-2 text-red-500 hover:text-red-600 hover:bg-red-50 py-2 cursor-pointer"
+                    >
+                      <LogOut className="w-4 h-4" />
+                      Logout
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : (
+                <div className="flex items-center gap-3">
+                  <Button
+                    asChild
+                    variant="ghost"
+                    size="sm"
+                    className="rounded-full"
+                  >
+                    <Link href="/auth/register">Sign Up</Link>
+                  </Button>
+                  <Button
+                    asChild
+                    variant="default"
+                    size="sm"
+                    className="rounded-full px-6 shadow-md shadow-primary/20"
+                  >
+                    <Link href="/auth/login">Login</Link>
+                  </Button>
+                </div>
+              )}
+            </motion.div>
+          )}
+        </div>
+
+        {/* Mobile Menu Button */}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="md:hidden"
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+        >
+          <Menu className="w-6 h-6" />
+        </Button>
+
+        {/* Mobile Menu */}
+        {mobileMenuOpen && (
+          <motion.div
+            className="absolute top-full left-0 right-0 bg-white shadow-lg rounded-b-xl p-4 flex flex-col gap-2 md:hidden"
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.2 }}
+          >
+            <Link
+              href="/recipes"
+              className="flex items-center gap-2 px-4 py-2 hover:bg-primary/10 rounded-lg text-gray-800"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              <Search className="w-4 h-4" />
+              Browse Meals
+            </Link>
+
+            {!loading && !user ? (
+              <>
+                <Link
+                  href="/auth/login"
+                  className="px-4 py-2 hover:bg-primary/10 rounded-lg text-gray-800"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Login
+                </Link>
+                <Link
+                  href="/auth/register"
+                  className="px-4 py-2 bg-primary text-white rounded-lg"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Sign Up
+                </Link>
+              </>
+            ) : user ? (
+              <>
+                <div className="p-3 flex items-center gap-3 border-b border-gray-100 mb-2">
+                  <Avatar className="w-10 h-10 border-2 border-primary/20">
+                    <AvatarImage src={user.avatar} alt={user.name} />
+                    <AvatarFallback className="bg-primary text-primary-foreground">
+                      {getInitial(user.name)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex flex-col">
+                    <span className="font-bold">{user.name}</span>
+                    <span className="text-xs text-gray-500">{user.email}</span>
                   </div>
+                </div>
+
+                <Link
+                  href="/profile"
+                  className="flex items-center gap-2 px-4 py-2 hover:bg-primary/10 rounded-lg text-gray-800"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  <UserCircle className="w-4 h-4" />
+                  Your Profile
+                </Link>
+                <Link
+                  href="/recipes/create"
+                  className="flex items-center gap-2 px-4 py-2 hover:bg-primary/10 rounded-lg text-gray-800"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  <PlusCircle className="w-4 h-4" />
+                  Share Recipe
+                </Link>
+                <Link
+                  href="/my-recipes"
+                  className="flex items-center gap-2 px-4 py-2 hover:bg-primary/10 rounded-lg text-gray-800"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  <Bookmark className="w-4 h-4" />
+                  My Recipes
+                </Link>
+
+                {user.shops && user.shops.length > 0 && (
+                  <Link
+                    href="/my-shops"
+                    className="flex items-center gap-2 px-4 py-2 hover:bg-primary/10 rounded-lg text-gray-800"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    <ShoppingBag className="w-4 h-4" />
+                    My Shops
+                  </Link>
                 )}
-              </li>
-            )}
-          </ul>
-        </nav>
+
+                <button
+                  onClick={() => {
+                    logout();
+                    setMobileMenuOpen(false);
+                  }}
+                  className="flex items-center gap-2 px-4 py-2 text-red-500 hover:bg-red-50 rounded-lg mt-2"
+                >
+                  <LogOut className="w-4 h-4" />
+                  Logout
+                </button>
+              </>
+            ) : null}
+          </motion.div>
+        )}
       </header>
+      {/* Spacer to prevent content from hiding under fixed header */}
+      <div className="h-16 md:h-20"></div>
     </>
   );
 }
