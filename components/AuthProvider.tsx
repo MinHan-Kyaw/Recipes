@@ -1,4 +1,5 @@
 "use client";
+import { User } from "@/lib/types/user";
 import Cookies from "js-cookie";
 import {
   createContext,
@@ -8,15 +9,6 @@ import {
   ReactNode,
   useCallback,
 } from "react";
-
-interface User {
-  _id: string;
-  name: string;
-  email: string;
-  status: string;
-  type: string;
-  shops?: string[];
-}
 
 interface AuthContextType {
   user: User | null;

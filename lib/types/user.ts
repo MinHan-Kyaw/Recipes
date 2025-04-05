@@ -1,13 +1,12 @@
 export interface User {
-  id?: string;
+  _id?: string;
   name: string;
   email: string;
   password?: string; // Only used during signup/login, not typically stored in state
+  type: "admin" | "user";
+  status: "unverified" | "verified";
+  shops?: string[]; // Array of Shop IDs
   createdAt?: Date;
-  updatedAt?: Date;
-  isAdmin?: boolean;
-  isVerified?: boolean;
-  profileImage?: string;
 }
 
 // For signup form state

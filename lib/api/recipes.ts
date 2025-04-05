@@ -48,7 +48,6 @@ export async function getAllRecipes() {
       // For server components
       cache: "no-store",
     });
-    console.log("response>>>>>>>", response);
 
     // Check for HTML response (error page)
     const contentType = response.headers.get("content-type");
@@ -60,7 +59,6 @@ export async function getAllRecipes() {
     }
 
     const data = await response.json();
-    console.log("data>>>>>>>", data);
 
     if (!response.ok) {
       throw new Error(data.error || "Failed to fetch recipes");
@@ -169,9 +167,7 @@ export async function fetchUserRecipes(userId: string) {
     const response = await fetch(`${baseUrl}/api/recipes/author/${userId}`, {
       cache: "no-store",
     });
-
     const data = await response.json();
-
     if (!response.ok) {
       throw new Error(data.error || "Failed to fetch user recipes");
     }
@@ -195,6 +191,20 @@ export async function fetchRecipeById(recipeId: string) {
 
     if (!response.ok) {
       throw new Error(data.error || "Failed to fetch recipe");
+    }
+    if (data.data.author) {
+      const authorResponse = await fetch(
+        `${baseUrl}/api/users/${data.data.author}`,
+        {
+          cache: "no-store",
+        }
+      );
+
+      if (authorResponse.ok) {
+        const authorData = await authorResponse.json();
+        // Add author info to the recipe data
+        data.data.authorDetails = authorData.data;
+      }
     }
 
     return data.data;

@@ -64,9 +64,11 @@ export default function MealDetails({ meal }: { meal: Recipe }) {
               <h1 className="text-4xl md:text-5xl font-bold text-primary">
                 {meal.title}
               </h1>
-              <p className="text-lg text-secondary italic">
-                by <span>{meal.author || "Unknown Chef"}</span>
-              </p>
+              <div className="recipe-meta">
+                {meal.authorDetails && (
+                  <p className="recipe-author">by {meal.authorDetails.name}</p>
+                )}
+              </div>
               <p className="text-xl text-gray-700">{meal.description}</p>
             </motion.div>
           </div>

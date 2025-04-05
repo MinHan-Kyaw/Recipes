@@ -1,38 +1,46 @@
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/mongodb";
 import Recipe from "@/models/Recipe";
+import User from "@/models/User";
 
-// GET /api/recipes - Get all recipes with optional filtering
 export async function GET(request) {
   try {
     await dbConnect();
 
-    // Get URL parameters
-    const { searchParams } = new URL(request.url);
-    const authorId = searchParams.get("authorId");
+    // Fetch recipes and populate author details
+    const recipes = await Recipe.find({})
+      .populate({
+        path: "author",
+        model: User,
+        select: "name _id", // Only select name and _id fields
+      })
+      .lean();
 
-    // Build query object based on parameters
-    const query = {};
+    // Transform the data to match your expected format
+    const transformedRecipes = recipes.map((recipe) => {
+      return {
+        ...recipe,
+        authorDetails: {
+          name: recipe.author?.name || "Unknown Author",
+        },
+        // Optionally keep the original author ID
+        author: recipe.author?._id || recipe.author,
+      };
+    });
 
-    // Filter by author if provided
-    if (authorId) {
-      query.author = authorId;
-    }
-
-    // Find recipes matching the query
-    const recipes = await Recipe.find(query).sort({ createdAt: -1 });
-
-    return NextResponse.json({ success: true, data: recipes });
+    return NextResponse.json({
+      success: true,
+      data: transformedRecipes,
+    });
   } catch (error) {
     console.error("Error fetching recipes:", error);
     return NextResponse.json(
       { success: false, error: "Failed to fetch recipes" },
-      { status: 400 }
+      { status: 500 }
     );
   }
 }
 
-// POST /api/recipes - Create a new recipe
 export async function POST(request) {
   try {
     await dbConnect();
@@ -40,10 +48,37 @@ export async function POST(request) {
     // Parse the request body
     const body = await request.json();
 
+    // Convert author string to ObjectId if it's a string
+    if (body.author && typeof body.author === "string") {
+      body.author = new mongoose.Types.ObjectId(body.author);
+    }
+
     // Create a new recipe document
     const recipe = await Recipe.create(body);
 
-    return NextResponse.json({ success: true, data: recipe }, { status: 201 });
+    const populatedRecipe = await Recipe.findById(recipe._id)
+      .populate({
+        path: "author",
+        model: User,
+        select: "name _id",
+      })
+      .lean();
+
+    // Format the response
+    const responseData = populatedRecipe
+      ? {
+          ...populatedRecipe,
+          authorDetails: {
+            name: populatedRecipe.author?.name || "Unknown Author",
+          },
+          author: populatedRecipe.author?._id || populatedRecipe.author,
+        }
+      : recipe;
+
+    return NextResponse.json(
+      { success: true, data: responseData },
+      { status: 201 }
+    );
   } catch (error) {
     console.error("Error creating recipe:", error);
     return NextResponse.json(

@@ -118,7 +118,7 @@ export default function MainHeader() {
                       >
                         Your Profile
                       </Link>
-                      
+
                       {/* Add My Recipes link */}
                       <Link
                         href="/my-recipes"

@@ -1,16 +1,9 @@
 import { Suspense } from "react";
 import RecipesGrid from "@/components/meals/RecipesGrid";
-import { Metadata } from "next";
 import { getAllRecipes } from "@/lib/api/recipes";
-
-export const metadata: Metadata = {
-  title: "All Recipes",
-  description: "Browse the most delicious recipes shared by our community.",
-};
 
 async function Recipes() {
   const recipes = await getAllRecipes();
-  // console.log("recipes", recipes);
   return <RecipesGrid meals={recipes} />;
 }
 

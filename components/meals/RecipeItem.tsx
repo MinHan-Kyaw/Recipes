@@ -20,7 +20,7 @@ export default function RecipeItem({ meal }: RecipeItemProps) {
   const router = useRouter();
 
   const handleClick = () => {
-    router.push(`/meals/${meal._id}`);
+    router.push(`/recipes/${meal._id}`);
   };
 
   // Find the primary image or use the first one if no primary is set
@@ -57,7 +57,7 @@ export default function RecipeItem({ meal }: RecipeItemProps) {
             {meal.title}
           </h2>
           <p className="text-sm text-muted-foreground italic">
-            {meal.author ? `by ${meal.author}` : ""}
+            {meal.authorDetails ? `by ${meal.authorDetails.name}` : ""}
           </p>
         </div>
       </CardHeader>

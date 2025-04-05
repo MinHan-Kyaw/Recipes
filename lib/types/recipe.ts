@@ -21,7 +21,10 @@ export interface Recipe {
   notes: string;
   images: RecipeImage[];
   videoUrl: string;
-  author?: string;
+  author?: {
+    id: string;
+    name: string;
+  }
   createdAt?: Date;
   updatedAt?: Date;
   tags?: string[];
@@ -29,4 +32,7 @@ export interface Recipe {
   cuisine?: string;
   difficulty?: "easy" | "medium" | "hard";
   isPublic?: boolean;
+  authorDetails?: {
+    name: string;
+  };
 }

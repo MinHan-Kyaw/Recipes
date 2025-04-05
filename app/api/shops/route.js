@@ -22,12 +22,30 @@ export async function POST(request) {
   }
 }
 
-export async function GET() {
+export async function GET(request) {
   try {
     await dbConnect();
 
-    // Find all approved shops
-    const shops = await Shop.find({ isApproved: true });
+    // Get URL parameters
+    const { searchParams } = new URL(request.url);
+    const ownerId = searchParams.get("ownerId");
+    const isApproved = searchParams.get("isApproved");
+
+    // Build query object based on parameters
+    const query = {};
+
+    // Filter by owner if provided
+    if (ownerId) {
+      query.owner = ownerId;
+    }
+
+    // Filter by approval status if provided
+    if (isApproved !== null && isApproved !== undefined) {
+      query.isApproved = isApproved === "true";
+    }
+
+    // Find shops matching the query
+    const shops = await Shop.find(query).sort({ createdAt: -1 });
 
     return NextResponse.json({ success: true, data: shops });
   } catch (error) {

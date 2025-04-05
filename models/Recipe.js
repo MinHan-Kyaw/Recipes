@@ -72,7 +72,8 @@ const RecipeSchema = new mongoose.Schema({
 
   // Optional metadata fields
   author: {
-    type: String,
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User"
   },
   createdAt: {
     type: Date,

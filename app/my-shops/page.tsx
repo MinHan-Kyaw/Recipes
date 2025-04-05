@@ -12,8 +12,8 @@ import {
   Plus,
   Loader2,
   AlertTriangle,
-  Filter,
   Search,
+  Store,
 } from "lucide-react";
 import {
   AlertDialog,
@@ -28,8 +28,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/components/AuthProvider";
-import { fetchUserRecipes, deleteRecipe } from "@/lib/api/recipes";
-import { Recipe } from "@/lib/types/recipe";
+import { Shop } from "@/lib/types/shop";
+import { deleteShop, fetchUserShops } from "@/lib/api/shops";
 
 // Animation variants
 const containerVariants = {
@@ -62,32 +62,32 @@ const buttonVariants = {
   tap: { scale: 0.95 },
 };
 
-export default function MyRecipes() {
+export default function MyShops() {
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
   const { toast } = useToast();
-  const [recipes, setRecipes] = useState<Recipe[]>([]);
-  const [filteredRecipes, setFilteredRecipes] = useState<Recipe[]>([]);
+  const [shops, setShops] = useState<Shop[]>([]);
+  const [filteredShops, setFilteredShops] = useState<Shop[]>([]);
   const [loading, setLoading] = useState(true);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [recipeToDelete, setRecipeToDelete] = useState<string | null>(null);
+  const [shopToDelete, setShopToDelete] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
-    async function loadRecipes() {
+    async function loadShops() {
       if (!user) return;
 
       try {
         setLoading(true);
         if (!user._id) return;
-        const userRecipes = await fetchUserRecipes(user._id);
-        setRecipes(userRecipes);
-        setFilteredRecipes(userRecipes);
+        const userShops = await fetchUserShops(user._id);
+        setShops(userShops);
+        setFilteredShops(userShops);
       } catch (error) {
         toast({
           title: "Error",
-          description: "Failed to load your recipes. Please try again.",
+          description: "Failed to load your shops. Please try again.",
           variant: "destructive",
         });
       } finally {
@@ -96,56 +96,54 @@ export default function MyRecipes() {
     }
 
     if (!authLoading) {
-      loadRecipes();
+      loadShops();
     }
   }, [user, authLoading, toast]);
 
   useEffect(() => {
     if (searchTerm.trim() === "") {
-      setFilteredRecipes(recipes);
+      setFilteredShops(shops);
     } else {
-      const filtered = recipes.filter(
-        (recipe) =>
-          recipe.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          recipe.description.toLowerCase().includes(searchTerm.toLowerCase())
+      const filtered = shops.filter(
+        (shop) =>
+          shop.shopName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          shop.description?.toLowerCase().includes(searchTerm.toLowerCase())
       );
-      setFilteredRecipes(filtered);
+      setFilteredShops(filtered);
     }
-  }, [searchTerm, recipes]);
+  }, [searchTerm, shops]);
 
-  const handleDeleteClick = (recipeId: string) => {
-    setRecipeToDelete(recipeId);
+  const handleDeleteClick = (shopId: string) => {
+    setShopToDelete(shopId);
     setDeleteDialogOpen(true);
   };
 
   const confirmDelete = async () => {
-    if (!recipeToDelete) return;
+    if (!shopToDelete || !user || !user._id) return;
 
     try {
       setIsDeleting(true);
-      await deleteRecipe(recipeToDelete);
+      await deleteShop(shopToDelete, user._id);
 
-      // Update recipes list
-      const updatedRecipes = recipes.filter(
-        (recipe) => recipe._id !== recipeToDelete
-      );
-      setRecipes(updatedRecipes);
-      setFilteredRecipes(updatedRecipes);
+      // Update shops list
+      const updatedShops = shops.filter((shop) => shop._id !== shopToDelete);
+      setShops(updatedShops);
+      setFilteredShops(updatedShops);
 
       toast({
-        title: "Recipe Deleted",
-        description: "Your recipe has been successfully deleted.",
+        title: "Shop Deleted",
+        description: "Your shop has been successfully deleted.",
       });
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to delete recipe. Please try again.",
+        description: "Failed to delete shop. Please try again.",
         variant: "destructive",
       });
     } finally {
       setIsDeleting(false);
       setDeleteDialogOpen(false);
-      setRecipeToDelete(null);
+      setShopToDelete(null);
     }
   };
 
@@ -175,15 +173,15 @@ export default function MyRecipes() {
         className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4"
       >
         <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent">
-          My Recipes
+          My Shops
         </h1>
         <motion.div variants={buttonVariants} whileHover="hover" whileTap="tap">
           <Button
-            onClick={() => router.push("/recipes/create")}
+            onClick={() => router.push("/shops/create")}
             className="gap-2 shadow-md rounded-full px-6"
           >
             <Plus size={18} />
-            Add New Recipe
+            Create New Shop
           </Button>
         </motion.div>
       </motion.div>
@@ -200,7 +198,7 @@ export default function MyRecipes() {
             size={18}
           />
           <Input
-            placeholder="Search your recipes..."
+            placeholder="Search your shops..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-10 pr-4 py-2 rounded-full bg-gray-50 border-gray-200 focus:ring-primary focus:border-primary"
@@ -212,7 +210,7 @@ export default function MyRecipes() {
         <div className="flex justify-center items-center py-16">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
-      ) : filteredRecipes.length === 0 ? (
+      ) : filteredShops.length === 0 ? (
         <motion.div
           initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
@@ -222,13 +220,13 @@ export default function MyRecipes() {
           <AlertTriangle className="h-12 w-12 mx-auto text-gray-400 mb-4" />
           <h3 className="text-xl font-medium text-gray-700 mb-2">
             {searchTerm
-              ? "No Recipes Found Matching Your Search"
-              : "No Recipes Found"}
+              ? "No Shops Found Matching Your Search"
+              : "No Shops Found"}
           </h3>
           <p className="text-gray-500 mb-6">
             {searchTerm
               ? "Try a different search term or clear your search"
-              : "You haven't created any recipes yet."}
+              : "You haven't created any shops yet."}
           </p>
           {!searchTerm && (
             <motion.div
@@ -237,12 +235,12 @@ export default function MyRecipes() {
               whileTap="tap"
             >
               <Button
-                onClick={() => router.push("/recipes/create")}
+                onClick={() => router.push("/shops/create")}
                 variant="outline"
                 className="gap-2 rounded-full px-6"
               >
                 <Plus size={18} />
-                Create Your First Recipe
+                Create Your First Shop
               </Button>
             </motion.div>
           )}
@@ -255,41 +253,50 @@ export default function MyRecipes() {
           className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
         >
           <AnimatePresence>
-            {filteredRecipes.map((recipe) => (
+            {filteredShops.map((shop) => (
               <motion.div
-                key={recipe._id}
+                key={shop._id}
                 variants={itemVariants}
-                layoutId={recipe._id}
+                layoutId={shop._id}
                 exit={{ opacity: 0, scale: 0.8 }}
               >
                 <Card className="overflow-hidden flex flex-col h-full hover:shadow-lg hover:border-primary/20 transition-all duration-300">
                   <div
-                    className="relative h-56 bg-gray-100 overflow-hidden"
-                    onClick={() => router.push(`/recipe/${recipe._id}`)}
+                    className="relative h-48 bg-gray-100 overflow-hidden"
+                    onClick={() => router.push(`/shop/${shop._id}`)}
                     style={{ cursor: "pointer" }}
                   >
-                    {recipe.images && recipe.images.length > 0 ? (
+                    {shop.logo && shop.logo.url ? (
                       <Image
-                        src={recipe.images[0].url}
-                        alt={recipe.title}
+                        src={shop.logo.url}
+                        alt={shop.shopName}
                         fill
                         sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                         className="object-cover transition-transform duration-500 hover:scale-105"
                       />
                     ) : (
                       <div className="flex items-center justify-center h-full">
-                        <span className="text-gray-400">No image</span>
+                        <Store className="h-16 w-16 text-gray-300" />
                       </div>
                     )}
                   </div>
                   <CardContent className="pt-4 pb-2 flex-1">
-                    <h3 className="text-xl font-semibold mb-2">
-                      {recipe.title}
-                    </h3>
-                    <p className="text-gray-500 line-clamp-2 mb-2">
-                      {recipe.description}
+                    <div className="flex items-center justify-between mb-2">
+                      <h3 className="text-xl font-semibold">{shop.shopName}</h3>
+                      <span
+                        className={`text-xs px-2 py-1 rounded-full ${
+                          shop.isApproved
+                            ? "bg-green-100 text-green-800"
+                            : "bg-yellow-100 text-yellow-800"
+                        }`}
+                      >
+                        {shop.isApproved ? "Approved" : "Pending"}
+                      </span>
+                    </div>
+                    <p className="text-gray-500 line-clamp-2 mb-3">
+                      {shop.description || "No description provided"}
                     </p>
-                    <div className="flex gap-4 text-sm text-gray-500 mt-3">
+                    <div className="flex flex-col gap-1 text-sm text-gray-500">
                       <span className="inline-flex items-center">
                         <svg
                           className="w-4 h-4 mr-1"
@@ -302,30 +309,34 @@ export default function MyRecipes() {
                             strokeLinecap="round"
                             strokeLinejoin="round"
                             strokeWidth={2}
-                            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                            d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                          />
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
                           />
                         </svg>
-                        Prep: {recipe.prepTime} mins
+                        {shop.city}, {shop.state}
                       </span>
-                      {recipe.cookTime > 0 && (
-                        <span className="inline-flex items-center">
-                          <svg
-                            className="w-4 h-4 mr-1"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                            xmlns="http://www.w3.org/2000/svg"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-                            />
-                          </svg>
-                          Cook: {recipe.cookTime} mins
-                        </span>
-                      )}
+                      <span className="inline-flex items-center">
+                        <svg
+                          className="w-4 h-4 mr-1"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                          xmlns="http://www.w3.org/2000/svg"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                          />
+                        </svg>
+                        {shop.email}
+                      </span>
                     </div>
                   </CardContent>
                   <CardFooter className="flex justify-between pt-2">
@@ -337,10 +348,10 @@ export default function MyRecipes() {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => router.push(`/recipes/${recipe._id}`)}
+                        onClick={() => router.push(`/shops/${shop._id}`)}
                         className="rounded-full"
                       >
-                        View Recipe
+                        View Shop
                       </Button>
                     </motion.div>
                     <div className="flex gap-2">
@@ -353,7 +364,7 @@ export default function MyRecipes() {
                           variant="outline"
                           size="sm"
                           onClick={() =>
-                            router.push(`/my-recipes/edit/${recipe._id}`)
+                            router.push(`/my-shops/edit/${shop._id}`)
                           }
                           className="rounded-full"
                         >
@@ -368,9 +379,7 @@ export default function MyRecipes() {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() =>
-                            handleDeleteClick(recipe._id as string)
-                          }
+                          onClick={() => handleDeleteClick(shop._id as string)}
                           className="rounded-full text-red-500 hover:bg-red-50 hover:border-red-200 hover:text-red-600"
                         >
                           <Trash2 size={16} />
@@ -391,7 +400,7 @@ export default function MyRecipes() {
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>
               This action cannot be undone. This will permanently delete your
-              recipe.
+              shop and all associated data.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

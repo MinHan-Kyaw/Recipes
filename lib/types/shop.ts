@@ -4,7 +4,7 @@ export interface ShopLogo {
 }
 
 export interface Shop {
-  id?: string;
+  _id?: string;
   shopName: string;
   owner: string;
   ownerName: string;
