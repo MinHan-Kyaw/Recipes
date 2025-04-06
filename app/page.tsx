@@ -59,7 +59,7 @@ export default function Home() {
               className="ml-4 mt-4 bg-amber-500 hover:bg-amber-600 text-white py-6 px-10 text-2xl"
               asChild
             >
-              <Link href="/meals">Explore Meals</Link>
+              <Link href="/recipes">Explore Meals</Link>
             </Button>
           </div>
         </div>

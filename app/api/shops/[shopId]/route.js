@@ -2,20 +2,24 @@ import { NextResponse } from "next/server";
 import dbConnect from "@/lib/mongodb";
 import Shop from "@/models/Shop";
 
-// GET /api/shops/[shopId] - Get a single shop by ID
 export async function GET(request, { params }) {
   try {
     await dbConnect();
     const { shopId } = params;
-
     const shop = await Shop.findById(shopId);
-
     if (!shop) {
       return NextResponse.json(
         { success: false, error: "Shop not found" },
         { status: 404 }
       );
     }
+    // // Check if the shop is approved
+    // if (!shop.isApproved) {
+    //   return NextResponse.json(
+    //     { error: 'Shop is not currently available' },
+    //     { status: 403 }
+    //   );
+    // }
 
     return NextResponse.json({ success: true, data: shop });
   } catch (error) {
@@ -56,7 +60,6 @@ export async function PUT(request, { params }) {
   }
 }
 
-// DELETE /api/shops/[shopId] - Delete a shop
 export async function DELETE(request, { params }) {
   try {
     await dbConnect();

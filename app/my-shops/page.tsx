@@ -188,7 +188,7 @@ export default function MyShops() {
 
   const getShopDetails = (shop: Shop) => ({
     id: shop._id as string,
-    viewPath: `/shop/${shop._id}`,
+    viewPath: `/shops/${shop._id}`,
     editPath: `/my-shops/edit/${shop._id}`,
   });
 

@@ -136,7 +136,24 @@ export default function MainHeader() {
               </Link>
             </Button>
           </motion.div>
-
+          {/* Add the new Browse Shops nav item */}
+          <motion.div
+            custom={1}
+            initial="initial"
+            animate="animate"
+            variants={navItemAnimation}
+          >
+            <Button
+              variant="ghost"
+              className="rounded-full px-4 hover:bg-primary/10 hover:text-primary flex items-center gap-2 font-medium"
+              asChild
+            >
+              <Link href="/shops">
+                <Store className="w-4 h-4" />
+                Browse Shops
+              </Link>
+            </Button>
+          </motion.div>
           {!loading && (
             <motion.div
               custom={1}
@@ -149,7 +166,11 @@ export default function MainHeader() {
                   <DropdownMenuTrigger asChild>
                     <div className="flex items-center gap-2 bg-white/80 hover:bg-white/90 px-3 py-2 rounded-full cursor-pointer transition-all border border-gray-100 shadow-sm">
                       <Avatar className="w-8 h-8 border-2 border-primary/20">
-                        <AvatarImage src={user.avatar} alt={user.name} />
+                        <AvatarImage
+                          src={user.avatar}
+                          alt={user.name}
+                          className="object-cover"
+                        />
                         <AvatarFallback className="bg-primary text-primary-foreground font-medium">
                           {getInitial(user.name)}
                         </AvatarFallback>
@@ -165,7 +186,11 @@ export default function MainHeader() {
                   >
                     <div className="p-3 flex items-center gap-3">
                       <Avatar className="w-12 h-12 border-2 border-primary/20">
-                        <AvatarImage src={user.avatar} alt={user.name} />
+                        <AvatarImage
+                          src={user.avatar}
+                          alt={user.name}
+                          className="object-cover"
+                        />
                         <AvatarFallback className="bg-primary text-primary-foreground text-lg font-medium">
                           {getInitial(user.name)}
                         </AvatarFallback>
@@ -301,6 +326,14 @@ export default function MainHeader() {
               <Search className="w-4 h-4" />
               Browse Meals
             </Link>
+            <Link
+              href="/shops"
+              className="flex items-center gap-2 px-4 py-2 hover:bg-primary/10 rounded-lg text-gray-800"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              <Store className="w-4 h-4" />
+              Browse Shops
+            </Link>
 
             {!loading && !user ? (
               <>
@@ -323,7 +356,11 @@ export default function MainHeader() {
               <>
                 <div className="p-3 flex items-center gap-3 border-b border-gray-100 mb-2">
                   <Avatar className="w-10 h-10 border-2 border-primary/20">
-                    <AvatarImage src={user.avatar} alt={user.name} />
+                    <AvatarImage
+                      src={user.avatar}
+                      alt={user.name}
+                      className="object-cover"
+                    />
                     <AvatarFallback className="bg-primary text-primary-foreground">
                       {getInitial(user.name)}
                     </AvatarFallback>
