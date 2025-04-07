@@ -6,15 +6,27 @@ import User from "@/models/User";
 export async function GET(request) {
   try {
     await dbConnect();
-
-    // Fetch recipes and populate author details
-    const recipes = await Recipe.find({})
+    const { searchParams } = new URL(request.url);
+    const shopId = searchParams.get("shop");
+    const limit = parseInt(searchParams.get("limit")) || null;
+    const query = {};
+    if (shopId) {
+      query.shop = shopId;
+    }
+    let recipeQuery = Recipe.find(query)
+      .sort({ createdAt: -1 })
       .populate({
         path: "author",
         model: User,
-        select: "name _id", // Only select name and _id fields
+        select: "name _id",
       })
+      .populate("shop", "shopName")
       .lean();
+
+    if (limit) {
+      recipeQuery = recipeQuery.limit(limit);
+    }
+    const recipes = await recipeQuery;
 
     // Transform the data to match your expected format
     const transformedRecipes = recipes.map((recipe) => {

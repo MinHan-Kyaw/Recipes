@@ -213,3 +213,33 @@ export async function fetchRecipeById(recipeId: string) {
     throw error;
   }
 }
+
+export async function fetchShopRecipes(
+  shopId: string,
+  options?: { limit?: number }
+) {
+  try {
+    const params = new URLSearchParams();
+    params.set("shop", shopId);
+    if (options?.limit) {
+      params.set("limit", options.limit.toString());
+    }
+
+    const response = await fetch(`/api/recipes?${params.toString()}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to fetch shop recipes");
+    }
+
+    const result = await response.json();
+    return result.data;
+  } catch (error) {
+    console.error("Error fetching shop recipes:", error);
+    throw error;
+  }
+}

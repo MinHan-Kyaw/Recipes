@@ -65,7 +65,7 @@ export default function Login() {
         Cookies.set("token", response.token, cookieOptions);
 
         const userResponse = await fetch("/api/auth/me");
-        
+
         if (userResponse.ok) {
           const userData = await userResponse.json();
           if (
@@ -116,6 +116,7 @@ export default function Login() {
                 value={formData.email}
                 onChange={handleChange}
                 required
+                disabled={isLoading}
               />
             </div>
 
@@ -135,6 +136,7 @@ export default function Login() {
                 value={formData.password}
                 onChange={handleChange}
                 required
+                disabled={isLoading}
               />
             </div>
 

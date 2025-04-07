@@ -134,6 +134,7 @@ export default function EditRecipePage() {
           order: img.order,
         })),
       };
+      console.log("Final Recipe Data:", finalRecipeData);
 
       // Update the recipe
       const result = await updateRecipe(recipeId, finalRecipeData);
@@ -148,7 +149,7 @@ export default function EditRecipePage() {
       });
 
       // Redirect to the recipe details page
-      router.push(`/recipe/${recipeId}`);
+      router.push(`/recipes/${recipeId}`);
     } catch (error) {
       throw error;
     }
@@ -177,7 +178,7 @@ export default function EditRecipePage() {
       isEdit={true}
       recipeId={recipeId}
       onSubmit={handleSubmit}
-      cancelRedirectPath={`/recipe/${recipeId}`}
+      cancelRedirectPath={`/recipes/${recipeId}`}
       submitButtonText="Update Recipe"
       title="Edit Recipe"
     />

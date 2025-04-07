@@ -35,4 +35,5 @@ export interface Recipe {
   authorDetails?: {
     name: string;
   };
+  shop?: string | null;
 }

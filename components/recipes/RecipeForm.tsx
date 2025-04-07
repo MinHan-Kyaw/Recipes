@@ -17,6 +17,7 @@ import { VideoLink } from "@/components/recipes/VideoLink";
 import { ImageUpload } from "@/components/recipes/ImageUpload";
 import { Recipe, RecipeImage } from "@/lib/types/recipe";
 import { useToast } from "@/hooks/use-toast";
+import { ShopSelector } from "./ShopSelector";
 
 // Shadcn form field component
 const FormField: React.FC<{
@@ -138,6 +139,7 @@ const RecipeForm: React.FC<RecipeFormProps> = ({
       videoUrl: "",
       category: "",
       cuisine: "",
+      shop: null,
     }
   );
 
@@ -183,6 +185,7 @@ const RecipeForm: React.FC<RecipeFormProps> = ({
           `Please fill in all required fields: ${missingFields.join(", ")}`
         );
       }
+      console.log("Submitting recipe:", recipe);
 
       await onSubmit(recipe, localImages);
 
@@ -384,6 +387,13 @@ const RecipeForm: React.FC<RecipeFormProps> = ({
               label="Cuisine (Optional)"
             />
           </div>
+
+          <ShopSelector
+            selectedShopId={recipe.shop || null}
+            setSelectedShopId={(shopId) =>
+              setRecipe((prev) => ({ ...prev, shop: shopId }))
+            }
+          />
 
           {/* Notes */}
           <TextareaField

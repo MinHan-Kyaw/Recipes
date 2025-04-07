@@ -73,7 +73,7 @@ const RecipeSchema = new mongoose.Schema({
   // Optional metadata fields
   author: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "User"
+    ref: "User",
   },
   createdAt: {
     type: Date,
@@ -100,6 +100,10 @@ const RecipeSchema = new mongoose.Schema({
   isPublic: {
     type: Boolean,
     default: true,
+  },
+  shop: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Shop",
   },
 });
 

@@ -173,7 +173,7 @@ export default function RecipeListPage() {
 
   const getRecipeDetails = (recipe: Recipe) => ({
     id: recipe._id as string,
-    viewPath: `/recipe/${recipe._id}`,
+    viewPath: `/recipes/${recipe._id}`,
     editPath: `/my-recipes/edit/${recipe._id}`,
   });
 
