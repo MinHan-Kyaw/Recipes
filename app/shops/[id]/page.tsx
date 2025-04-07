@@ -132,11 +132,17 @@ export default function ShopDetailPage() {
                   size="icon"
                   onClick={() => {
                     if (navigator.share) {
-                      navigator.share({
-                        title: shop.shopName,
-                        text: `Check out ${shop.shopName} on NextLevel Food!`,
-                        url: window.location.href,
-                      });
+                      navigator
+                        .share({
+                          title: shop.shopName,
+                          text: `Check out ${shop.shopName} on NextLevel Food!`,
+                          url: window.location.href,
+                        })
+                        .catch((error) => {
+                          if (error.name !== "AbortError") {
+                            console.error("Error sharing:", error);
+                          }
+                        });
                     } else {
                       navigator.clipboard.writeText(window.location.href);
                       alert("Link copied to clipboard!");
