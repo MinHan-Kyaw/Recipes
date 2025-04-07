@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import debounce from "lodash/debounce";
 import { Loader, Store, Phone, MapPin, Info, Clock } from "lucide-react";
 import Image from "next/image";
@@ -67,15 +67,33 @@ export default function ShopsPage() {
     }
   }, []);
 
-  useEffect(() => {
-    // Fetch shops when location is available and has changed significantly
-    if (mapLoaded && currentLocation.lat !== 0 && currentLocation.lng !== 0) {
-      // Only fetch if moved more than a minimal threshold
-      fetchShops();
-    }
-  }, [mapLoaded, currentLocation.lat, currentLocation.lng]);
+  const calculateDistance = useCallback(
+    (lat1: number, lng1: number, lat2: number, lng2: number): number => {
+      const R = 6371; // Radius of the earth in km
+      const dLat = degreesToRadians(lat2 - lat1);
+      const dLng = degreesToRadians(lng2 - lng1);
+      const a =
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(degreesToRadians(lat1)) *
+          Math.cos(degreesToRadians(lat2)) *
+          Math.sin(dLng / 2) *
+          Math.sin(dLng / 2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      return R * c; // Distance in km
+    },
+    []
+  );
 
-  const fetchShops = async () => {
+  const degreesToRadians = (degrees: number): number => {
+    return degrees * (Math.PI / 180);
+  };
+
+  // Add this ref at the top of your component
+  const lastFetchedLocationRef = useRef<{ lat: number; lng: number } | null>(
+    null
+  );
+
+  const fetchShops = useCallback(async () => {
     setIsLoading(true);
     setError(null);
 
@@ -102,13 +120,50 @@ export default function ShopsPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [currentLocation]);
+
+  useEffect(() => {
+    // Fetch shops when location is available and has changed significantly
+    if (mapLoaded && currentLocation.lat !== 0 && currentLocation.lng !== 0) {
+      // Store the last fetched location in a ref to avoid unnecessary fetches
+      if (
+        !lastFetchedLocationRef.current ||
+        calculateDistance(
+          lastFetchedLocationRef.current.lat,
+          lastFetchedLocationRef.current.lng,
+          currentLocation.lat,
+          currentLocation.lng
+        ) > 0.05
+      ) {
+        // Only fetch if moved more than 50 meters
+        lastFetchedLocationRef.current = { ...currentLocation };
+        fetchShops();
+      }
+    }
+  }, [
+    mapLoaded,
+    currentLocation.lat,
+    currentLocation.lng,
+    currentLocation,
+    calculateDistance,
+    fetchShops,
+  ]);
 
   const handleLocationChange = useCallback(
-    debounce((lat: number, lng: number) => {
-      setCurrentLocation({ lat, lng });
-    }, 300),
-    [] // Empty dependency array to maintain the same function instance
+    (lat: number, lng: number) => {
+      // Round to 6 decimal places (approx. 11cm precision at the equator)
+      const roundedLat = parseFloat(lat.toFixed(6));
+      const roundedLng = parseFloat(lng.toFixed(6));
+
+      // Check if position has changed significantly before updating
+      if (
+        Math.abs(roundedLat - currentLocation.lat) > 0.000001 ||
+        Math.abs(roundedLng - currentLocation.lng) > 0.000001
+      ) {
+        setCurrentLocation({ lat: roundedLat, lng: roundedLng });
+      }
+    },
+    [currentLocation]
   );
 
   const filteredShops = shops.filter((shop) => {

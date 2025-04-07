@@ -69,8 +69,19 @@ const MapSelector: React.FC<MapSelectorProps> = ({
 
   // Helper function to update position - uses ref to avoid dependency issues
   const updatePosition = useCallback((lat: number, lng: number) => {
-    setCurrentPosition({ lat, lng });
-    onLocationChangeRef.current(lat, lng);
+    // Round to 6 decimal places for consistent precision
+    const roundedLat = parseFloat(lat.toFixed(6));
+    const roundedLng = parseFloat(lng.toFixed(6));
+
+    // Only update if position has changed significantly
+    const hasChangedSignificantly =
+      Math.abs(roundedLat - currentPositionRef.current.lat) > 0.000001 ||
+      Math.abs(roundedLng - currentPositionRef.current.lng) > 0.000001;
+
+    if (hasChangedSignificantly) {
+      setCurrentPosition({ lat: roundedLat, lng: roundedLng });
+      onLocationChangeRef.current(roundedLat, roundedLng);
+    }
   }, []);
 
   // Load Google Maps script - only run once
@@ -387,7 +398,7 @@ const MapSelector: React.FC<MapSelectorProps> = ({
       }
       return prevPosition;
     });
-  }, [initialPosition, mapInstance, marker, mapInitialized]); // Remove currentPosition from dependencies
+  }, [initialPosition, mapInstance, marker, mapInitialized, currentPosition.lat, currentPosition.lng]);
 
   return (
     <div className="relative w-full h-full">
