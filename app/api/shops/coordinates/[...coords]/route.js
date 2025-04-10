@@ -4,6 +4,7 @@ import dbConnect from "@/lib/mongodb";
 
 export async function GET(request, { params }) {
   try {
+    await dbConnect();
     const { coords } = params;
     const [lat, lng] = coords;
 
@@ -19,8 +20,6 @@ export async function GET(request, { params }) {
       );
     }
 
-    // Connect to the database
-    await dbConnect();
 
     // const allShops = await Shop.find({ isApproved: true });
     const allShops = await Shop.find();

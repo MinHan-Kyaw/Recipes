@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import dbConnect from "@/lib/mongodb";
 import Recipe from "@/models/Recipe";
 import User from "@/models/User";
+import Shop from "@/models/Shop";
 
 export async function GET(request) {
   try {
@@ -19,6 +20,11 @@ export async function GET(request) {
         path: "author",
         model: User,
         select: "name _id",
+      })
+      .populate({
+        path: "shop",
+        model: Shop,
+        select: "shopName",
       })
       .populate("shop", "shopName")
       .lean();
@@ -45,7 +51,7 @@ export async function GET(request) {
       data: transformedRecipes,
     });
   } catch (error) {
-    console.error("Error fetching recipes:", error);
+    console.error("Error fetching recipess:", error);
     return NextResponse.json(
       { success: false, error: "Failed to fetch recipes" },
       { status: 500 }

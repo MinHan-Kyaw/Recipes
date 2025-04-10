@@ -48,6 +48,7 @@ export async function getAllRecipes() {
       // For server components
       cache: "no-store",
     });
+    console.log("Response status:", response.status);
 
     // Check for HTML response (error page)
     const contentType = response.headers.get("content-type");
@@ -59,6 +60,7 @@ export async function getAllRecipes() {
     }
 
     const data = await response.json();
+    console.log("Data:", data);
 
     if (!response.ok) {
       throw new Error(data.error || "Failed to fetch recipes");

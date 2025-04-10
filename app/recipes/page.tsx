@@ -4,6 +4,7 @@ import { getAllRecipes } from "@/lib/api/recipes";
 
 async function Recipes() {
   const recipes = await getAllRecipes();
+  console.log("Recipes:", recipes);
   return <RecipesGrid meals={recipes} />;
 }
 
