@@ -3,7 +3,7 @@ import type { NextRequest } from "next/server";
 import { jwtVerify } from "jose";
 
 // List of paths that don't require authentication
-const publicPaths = ["/", "/auth/login", "/auth/signup", "/recipes"];
+const publicPaths = ["/", "/auth/login", "/auth/signup", "/recipes", "/shops"];
 
 export async function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
@@ -14,6 +14,7 @@ export async function middleware(request: NextRequest) {
       path === publicPath ||
       path.startsWith("/api/auth/") ||
       path.startsWith("/recipes/") ||
+      path.startsWith("/shops/") ||
       path.startsWith("/api/recipes/") ||
       path.startsWith("/api/users/")
   );

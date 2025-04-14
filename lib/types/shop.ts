@@ -25,4 +25,5 @@ export interface Shop {
   };
   isApproved: boolean;
   createdAt: Date;
+  recipesCount?: number;
 }

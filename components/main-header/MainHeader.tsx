@@ -259,7 +259,7 @@ export default function MainHeader() {
                         asChild
                         className="flex items-center gap-2 py-2 cursor-pointer"
                       >
-                        <Link href="/admin-dashboard">
+                        <Link href="/admin/dashboard">
                           <Settings className="w-4 h-4" />
                           Admin Dashboard
                         </Link>
