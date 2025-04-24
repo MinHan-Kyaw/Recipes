@@ -157,7 +157,6 @@ export default function UsersPage() {
     try {
       if (dialogMode === "add") {
         const newUser: User = {
-          _id: `temp-${Date.now()}`,
           name: formData.name,
           email: formData.email,
           password: formData.password,

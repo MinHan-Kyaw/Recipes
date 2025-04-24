@@ -14,6 +14,7 @@ export async function GET(request) {
     if (shopId) {
       query.shop = shopId;
     }
+    query.isPublished = true;
     let recipeQuery = Recipe.find(query)
       .sort({ createdAt: -1 })
       .populate({
@@ -34,7 +35,6 @@ export async function GET(request) {
     }
     const recipes = await recipeQuery;
 
-    // Transform the data to match your expected format
     const transformedRecipes = recipes.map((recipe) => {
       return {
         ...recipe,

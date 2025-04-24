@@ -13,14 +13,14 @@ interface MapSelectorProps {
   initialPosition: { lat: number; lng: number };
   onLocationChange: (lat: number, lng: number) => void;
   useCurrentLocation?: boolean;
-  viewOnly?: boolean; // New prop for read-only mode
+  viewOnly?: boolean;
 }
 
 const MapSelector: React.FC<MapSelectorProps> = ({
   initialPosition,
   onLocationChange,
   useCurrentLocation = true,
-  viewOnly = false, // Default to false for backward compatibility
+  viewOnly = false,
 }) => {
   const mapRef = useRef<HTMLDivElement>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -84,35 +84,35 @@ const MapSelector: React.FC<MapSelectorProps> = ({
     }
   }, []);
 
-  // Load Google Maps script - only run once
+  // Load Google Maps script - improved loading logic
   useEffect(() => {
-    if (window.google && window.google.maps) {
+    // Check if Google Maps is already loaded and ready to use
+    if (window.google && window.google.maps && window.google.maps.Map) {
       setGoogleLoaded(true);
       return;
     }
+    
     const googleMapCallback = "initGoogleMapsCallback";
 
     // Create a global callback function
     window[googleMapCallback] = () => {
-      setGoogleLoaded(true);
+      // Adding a small delay to ensure Maps API is fully initialized
+      setTimeout(() => {
+        setGoogleLoaded(true);
+      }, 100);
     };
-
-    // Check if Google Maps is already loaded
-    if (window.google && window.google.maps) {
-      setGoogleLoaded(true);
-      return;
-    }
 
     // Prevent duplicate script loading
     const existingScript = document.querySelector(
       `script[src*="maps.googleapis.com/maps/api/js"]`
     );
+    
     if (existingScript) {
       // If script exists but Google isn't loaded, wait for it
-      if (!window.google || !window.google.maps) {
+      if (!window.google || !window.google.maps || !window.google.maps.Map) {
         // Original callback might be different, so we'll check periodically
         const checkGoogleInterval = setInterval(() => {
-          if (window.google && window.google.maps) {
+          if (window.google && window.google.maps && window.google.maps.Map) {
             clearInterval(checkGoogleInterval);
             setGoogleLoaded(true);
           }
@@ -135,6 +135,7 @@ const MapSelector: React.FC<MapSelectorProps> = ({
 
     script.onerror = () => {
       console.error("Google Maps script failed to load");
+      setIsLoading(false);
     };
     document.head.appendChild(script);
 
@@ -144,7 +145,7 @@ const MapSelector: React.FC<MapSelectorProps> = ({
         delete window[googleMapCallback];
       }
     };
-  }, []); // Empty dependency array ensures this only runs once
+  }, []);
 
   // Initialize map once Google is loaded
   useEffect(() => {
@@ -156,14 +157,17 @@ const MapSelector: React.FC<MapSelectorProps> = ({
 
     const initializeMap = async () => {
       if (isMapInitialized || !mapRef.current) return;
-      isMapInitialized = true;
-
+      
       try {
-        if (!window.google || !window.google.maps) {
+        // Double check that Google Maps is fully loaded
+        if (!window.google || !window.google.maps || !window.google.maps.Map) {
           console.error("Google Maps API not loaded correctly");
           setIsLoading(false);
           return;
         }
+
+        // Mark as initialized first to prevent duplicate initialization
+        isMapInitialized = true;
 
         // Always use initialPosition from props to ensure we start with correct coordinates
         let position =
@@ -193,21 +197,21 @@ const MapSelector: React.FC<MapSelectorProps> = ({
         mapObj = new window.google.maps.Map(mapRef.current, {
           center: position,
           zoom: 14,
-          mapTypeControl: !viewOnly, // Disable map type control in viewOnly mode
+          mapTypeControl: !viewOnly,
           streetViewControl: false,
-          fullscreenControl: !viewOnly, // Disable fullscreen control in viewOnly mode
-          zoomControl: true, // Always keep zoom control enabled
-          scrollwheel: !viewOnly, // Disable scroll wheel zoom in viewOnly mode
-          draggable: true, // Always allow panning the map
+          fullscreenControl: !viewOnly,
+          zoomControl: true,
+          scrollwheel: !viewOnly,
+          draggable: true,
         });
 
         setMapInstance(mapObj);
 
-        // Create marker using standard Marker instead of AdvancedMarkerElement
+        // Create marker using standard Marker
         markerObj = new window.google.maps.Marker({
           position,
           map: mapObj,
-          draggable: !viewOnly, // Disable dragging in viewOnly mode
+          draggable: !viewOnly,
         });
 
         setMarker(markerObj);
@@ -233,41 +237,40 @@ const MapSelector: React.FC<MapSelectorProps> = ({
             }
           });
 
-          // Only add search functionality in interactive mode
-          if (!viewOnly) {
-            // Add search functionality
-            const searchContainer = document.createElement("div");
-            searchContainer.className = "map-search-container";
-            searchContainer.style.cssText = `
-              box-sizing: border-box;
-              width: 240px;
-              margin-top: 10px;
-              background-color: white;
-              border-radius: 3px;
-              box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
-            `;
+          // Add search functionality
+          const searchContainer = document.createElement("div");
+          searchContainer.className = "map-search-container";
+          searchContainer.style.cssText = `
+            box-sizing: border-box;
+            width: 240px;
+            margin-top: 10px;
+            background-color: white;
+            border-radius: 3px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+          `;
 
-            mapObj.controls[window.google.maps.ControlPosition.TOP_LEFT].push(
-              searchContainer
-            );
+          mapObj.controls[window.google.maps.ControlPosition.TOP_LEFT].push(
+            searchContainer
+          );
 
-            const inputElement = document.createElement("input");
-            inputElement.placeholder = "Search for a location";
-            inputElement.style.cssText = `
-              box-sizing: border-box;
-              width: 240px;
-              height: 32px;
-              padding: 0 12px;
-              font-size: 14px;
-              outline: none;
-              border: none;
-              border-radius: 3px;
-            `;
+          const inputElement = document.createElement("input");
+          inputElement.placeholder = "Search for a location";
+          inputElement.style.cssText = `
+            box-sizing: border-box;
+            width: 240px;
+            height: 32px;
+            padding: 0 12px;
+            font-size: 14px;
+            outline: none;
+            border: none;
+            border-radius: 3px;
+          `;
 
-            searchContainer.appendChild(inputElement);
+          searchContainer.appendChild(inputElement);
 
-            // Only initialize autocomplete if Places library is available
-            if (window.google.maps.places) {
+          // Only initialize autocomplete if Places library is available
+          if (window.google.maps.places) {
+            try {
               const autocomplete = new window.google.maps.places.Autocomplete(
                 inputElement,
                 {
@@ -299,11 +302,13 @@ const MapSelector: React.FC<MapSelectorProps> = ({
 
                 updatePosition(lat, lng);
               });
+            } catch (error) {
+              console.error("Error initializing Places Autocomplete:", error);
             }
           }
 
           // Add a current location button if not in viewOnly mode
-          if (!viewOnly && useCurrentLocation) {
+          if (useCurrentLocation) {
             const locationButton = document.createElement("button");
             locationButton.textContent = "📍 My Location";
             locationButton.style.cssText = `
@@ -354,7 +359,10 @@ const MapSelector: React.FC<MapSelectorProps> = ({
       }
     };
 
-    initializeMap();
+    // Wrap initialization in a timeout to ensure Google Maps API is fully loaded
+    setTimeout(() => {
+      initializeMap();
+    }, 100);
 
     return () => {
       isMapInitialized = true;
@@ -365,12 +373,11 @@ const MapSelector: React.FC<MapSelectorProps> = ({
     updatePosition,
     initialPosition,
     useCurrentLocation,
-    viewOnly, // Add viewOnly to dependencies
+    viewOnly,
   ]);
 
+  // Handle updates to initialPosition prop
   useEffect(() => {
-    // Only run this effect when both the map and marker exist AND initialPosition has valid coords
-    // AND the initialPosition is different from what we already have
     if (
       !mapInstance ||
       !marker ||

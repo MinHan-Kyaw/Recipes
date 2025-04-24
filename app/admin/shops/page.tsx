@@ -31,7 +31,7 @@ import { Textarea } from "@/components/ui/textarea";
 import Link from "next/link";
 import { Shop } from "@/lib/types/shop";
 import { fetchShops } from "@/lib/api/admin/shops";
-import { fetchRecipeCounts } from "@/lib/api/admin/recipes";
+import { fetchRecipeCountsWithShop } from "@/lib/api/admin/recipes";
 import { StatsCard } from "@/components/admin/StatsCard";
 import { ShopSearchFilters } from "@/components/admin/shops/ShopSearchFilters";
 import { ShopDetailView } from "@/components/admin/shops/ShopDetailView";
@@ -130,7 +130,7 @@ export default function ShopsPage() {
         // After shops are loaded, fetch recipe counts for each shop
         if (data.data && data.data.length > 0) {
           const shopIds = data.data.map((shop: Shop) => shop._id);
-          const countData = await fetchRecipeCounts(shopIds);
+          const countData = await fetchRecipeCountsWithShop(shopIds);
 
           // Add recipe counts to shop objects
           setShops((prevShops) =>

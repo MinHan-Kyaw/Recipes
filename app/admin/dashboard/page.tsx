@@ -25,24 +25,70 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/components/AuthProvider";
+import { fetchUsersCount } from "@/lib/api/admin/users";
+import { fetchShopsCount } from "@/lib/api/admin/shops";
+import { fetchRecipeCounts } from "@/lib/api/admin/recipes";
 
 export default function AdminDashboard() {
   const [isSidebarCollapsed, setSidebarCollapsed] = useState(false);
   const { user, loading, logout } = useAuth();
+  const [stats, setStats] = useState({
+    totalUsers: 0,
+    pendingApprovals: 0,
+    totalShops: 0,
+    pendingShops: 0,
+    totalRecipes: 0,
+    newRecipesToday: 0,
+  });
+
+  useEffect(() => {
+    const getUserCount = async () => {
+      try {
+        const response = await fetchUsersCount();
+        const data = response.data;
+        setStats((prevStats) => ({
+          ...prevStats,
+          totalUsers: data.totalCount,
+          pendingApprovals: data.unverifiedCount,
+        }));
+      } catch (error) {
+        console.error("Error fetching user count:", error);
+      }
+    };
+    const getShopCount = async () => {
+      try {
+        const response = await fetchShopsCount();
+        const data = response.data;
+        setStats((prevStats) => ({
+          ...prevStats,
+          totalShops: data.totalCount,
+          pendingShops: data.notApprovedCount,
+        }));
+      } catch (error) {
+        console.error("Error fetching shop count:", error);
+      }
+    };
+    const getRecipeCount = async () => {
+      try {
+        const response = await fetchRecipeCounts();
+        const data = response.data;
+        setStats((prevStats) => ({
+          ...prevStats,
+          totalRecipes: data.totalCount,
+          newRecipesToday: data.todayCreatedCount,
+        }));
+      } catch (error) {
+        console.error("Error fetching recipe count:", error);
+      }
+    };
+    getRecipeCount();
+    getShopCount();
+    getUserCount();
+  }, []);
 
   // Get first letter of user's name for the avatar
   const getInitial = (name: string) => {
     return name ? name.charAt(0).toUpperCase() : "";
-  };
-
-  // Simulated stats for demonstration
-  const stats = {
-    totalUsers: 2547,
-    pendingApprovals: 18,
-    totalShops: 342,
-    pendingShops: 7,
-    totalRecipes: 1289,
-    newRecipesToday: 24,
   };
 
   return (
@@ -103,7 +149,7 @@ export default function AdminDashboard() {
               icon={<UtensilsCrossed />}
               label="Recipes"
               collapsed={isSidebarCollapsed}
-              href="/admin-dashboard/recipes"
+              href="/admin/recipes"
             />
             <div className="py-2">
               {!isSidebarCollapsed && (

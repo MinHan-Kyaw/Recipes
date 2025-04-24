@@ -70,3 +70,40 @@ export async function POST(request) {
     );
   }
 }
+
+export async function GET() {
+  try {
+    await dbConnect();
+
+    // Get total count of all recipes
+    const totalCount = await Recipe.countDocuments();
+
+    // Get count of recipes created today
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Set to beginning of today
+
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1); // Set to beginning of tomorrow
+
+    const todayCreatedCount = await Recipe.countDocuments({
+      createdAt: {
+        $gte: today,
+        $lt: tomorrow,
+      },
+    });
+
+    return NextResponse.json({
+      success: true,
+      data: {
+        totalCount,
+        todayCreatedCount,
+      },
+    });
+  } catch (error) {
+    console.error("Error fetching recipe counts:", error);
+    return NextResponse.json(
+      { success: false, error: "Failed to fetch recipe counts" },
+      { status: 500 }
+    );
+  }
+}

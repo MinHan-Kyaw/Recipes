@@ -85,3 +85,45 @@ export async function deleteUser(userId: string) {
     throw error;
   }
 }
+
+export async function fetchUsersCount() {
+  try {
+    const response = await fetch("/api/admin/users/count", {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to fetch users count");
+    }
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error("Error fetching users count api:", error);
+    throw error;
+  }
+}
+
+export async function approveUser(userId: string) {
+  try {
+    const response = await fetch(`/api/admin/users/${userId}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ status: 'verified' }),
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to approve user");
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error("Error approving user:", error);
+    throw error;
+  }
+}
