@@ -21,7 +21,7 @@ interface UserFiltersProps {
   setFilterShopOwners: (value: boolean) => void;
 }
 
-export function UserFilters({
+export default function UserFilters({
   searchTerm,
   setSearchTerm,
   filterType,

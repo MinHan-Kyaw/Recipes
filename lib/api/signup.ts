@@ -1,4 +1,5 @@
 import { User } from "../types/user";
+import { createActivityLog } from "./activitylog";
 
 export async function signupUser(userData: User) {
   try {
@@ -14,6 +15,17 @@ export async function signupUser(userData: User) {
 
     if (!response) {
       throw new Error(data.error || "Failed to sign up");
+    }
+    if (response.status === 200) {
+      await createActivityLog({
+        user: data.data._id,
+        userName: userData.name,
+        actionType: "register",
+        detail: `New user registration`,
+        entityType: "user",
+        entityName: userData.name + " registered",
+        entityId: data.data._id,
+      });
     }
 
     return data;

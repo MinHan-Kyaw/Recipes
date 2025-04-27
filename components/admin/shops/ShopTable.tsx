@@ -25,7 +25,7 @@ interface ShopTableProps {
   emptyMessage?: string;
 }
 
-export const ShopTable: React.FC<ShopTableProps> = ({
+export default function ShopTable({
   shops,
   isLoading,
   currentPage,
@@ -42,8 +42,7 @@ export const ShopTable: React.FC<ShopTableProps> = ({
   showRecipes = true,
   showCreated = true,
   emptyMessage = "No shops found matching your filters.",
-}) => {
-  // Get shop logo initials
+}: ShopTableProps): JSX.Element {
   const getShopInitials = (name: string) => {
     if (!name) return "";
     return name
@@ -161,4 +160,4 @@ export const ShopTable: React.FC<ShopTableProps> = ({
       emptyMessage={emptyMessage}
     />
   );
-};
+}

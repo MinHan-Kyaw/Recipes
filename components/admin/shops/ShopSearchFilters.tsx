@@ -18,7 +18,7 @@ interface ShopSearchFiltersProps {
   uniqueCategories: string[];
 }
 
-export function ShopSearchFilters({
+export default function ShopSearchFilters({
   searchTerm,
   onSearchChange,
   filterCategory,

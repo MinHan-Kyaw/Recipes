@@ -18,11 +18,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { Recipe } from "@/lib/types/recipe";
 import Link from "next/link";
-import {
-  createRecipe,
-  updateRecipe,
-  deleteRecipe,
-} from "@/lib/api/recipes";
+import { createRecipe, updateRecipe, deleteRecipe } from "@/lib/api/recipes";
 import {
   PublicTabContent,
   PrivateTabContent,
@@ -33,6 +29,9 @@ import { RecipeTable } from "@/components/admin/recipes/RecipeTable";
 import { RecipeStatsCards } from "@/components/admin/recipes/RecipeStatsCards";
 import { RecipeFilters } from "@/components/admin/recipes/RecipeFilters";
 import { fetchAllRecipeAdmin } from "@/lib/api/admin/recipes";
+import { RecentTabContent } from "@/components/admin/recipes/RecentTabContent";
+import Cookies from "js-cookie";
+import Sidebar from "@/components/admin/SideBar";
 
 export default function RecipesPage() {
   const { toast } = useToast();
@@ -77,8 +76,39 @@ export default function RecipesPage() {
     servings: "",
     prepTime: "",
   });
+  const [sortBy, setSortBy] = useState("newest");
+  const [userId, setUserId] = useState<string | null>(null);
 
   const itemsPerPage = 5;
+
+  const sortRecipes = (recipes: Recipe[]) => {
+    const sortedRecipes = [...recipes];
+
+    switch (sortBy) {
+      case "newest":
+        return sortedRecipes.sort(
+          (a, b) =>
+            new Date(b.createdAt || new Date()).getTime() -
+            new Date(a.createdAt || new Date()).getTime()
+        );
+      case "oldest":
+        return sortedRecipes.sort(
+          (a, b) =>
+            new Date(a.createdAt ?? new Date()).getTime() -
+            new Date(b.createdAt ?? new Date()).getTime()
+        );
+      case "title-asc":
+        return sortedRecipes.sort((a, b) => a.title.localeCompare(b.title));
+      case "title-desc":
+        return sortedRecipes.sort((a, b) => b.title.localeCompare(a.title));
+      case "prep-asc":
+        return sortedRecipes.sort((a, b) => a.prepTime - b.prepTime);
+      case "prep-desc":
+        return sortedRecipes.sort((a, b) => b.prepTime - a.prepTime);
+      default:
+        return sortedRecipes;
+    }
+  };
 
   // Fetch recipes on component mount
   useEffect(() => {
@@ -89,6 +119,11 @@ export default function RecipesPage() {
         const data = await fetchAllRecipeAdmin();
         console.log("Fetched recipes:", data);
         setRecipes(data.data || []);
+        const token = Cookies.get("token");
+        const userId = token
+          ? JSON.parse(atob(token.split(".")[1])).userId
+          : null;
+        setUserId(userId);
       } catch (error) {
         console.error("Failed to fetch recipes:", error);
         setRecipes([]);
@@ -220,7 +255,10 @@ export default function RecipesPage() {
           createdAt: new Date(),
           updatedAt: new Date(),
         };
-        await createRecipe(newRecipe);
+        if (!userId) {
+          throw new Error("User ID is required");
+        }
+        await createRecipe(newRecipe, userId);
         setRecipes((prev) => [...prev, newRecipe]);
 
         toast({
@@ -357,6 +395,8 @@ export default function RecipesPage() {
       );
     }) || [];
 
+  const sortedAndFilteredRecipes = sortRecipes(filteredRecipes);
+
   const sortedRecipes = [...filteredRecipes].sort((a, b) => {
     let fieldA = a[sortField as keyof Recipe];
     let fieldB = b[sortField as keyof Recipe];
@@ -390,7 +430,11 @@ export default function RecipesPage() {
   // Pagination
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentRecipes = sortedRecipes.slice(indexOfFirstItem, indexOfLastItem);
+  // const currentRecipes = sortedRecipes.slice(indexOfFirstItem, indexOfLastItem);
+  const currentRecipes = sortedAndFilteredRecipes.slice(
+    indexOfFirstItem,
+    indexOfLastItem
+  );
 
   // Handle sorting
   const handleSort = (field: keyof Recipe) => {
@@ -458,131 +502,156 @@ export default function RecipesPage() {
   ];
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
-      <div className="flex items-center justify-between mb-4">
-        <Link href={`/admin`}>
-          <Button variant="ghost" className="pl-0 mb-2 sm:mb-0">
-            <ChevronLeft className="w-4 h-4 mr-2" />
-            Back to Dashboard
-          </Button>
-        </Link>
-      </div>
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-800">
-            Recipe Management
-          </h1>
-          <p className="text-gray-500">Manage and monitor recipes</p>
-        </div>
-        <Button
-          onClick={handleAddRecipe}
-          className="mt-4 md:mt-0 flex items-center gap-2"
-        >
-          <Plus className="h-4 w-4" />
-          Add Recipe
-        </Button>
-      </div>
+    <div className="flex">
+      <Sidebar />
+      <div className="flex-1 overflow-auto">
+        <div className="p-6 max-w-7xl mx-auto">
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-6">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-800">
+                Recipe Management
+              </h1>
+              <p className="text-gray-500">Manage and monitor recipes</p>
+            </div>
+            <Button
+              onClick={handleAddRecipe}
+              className="mt-4 md:mt-0 flex items-center gap-2"
+            >
+              <Plus className="h-4 w-4" />
+              Add Recipe
+            </Button>
+          </div>
 
-      {/* Stats Cards */}
-      <RecipeStatsCards recipes={recipes || []} />
+          {/* Stats Cards */}
+          <RecipeStatsCards recipes={recipes || []} />
 
-      {/* Tabs for different recipe views */}
-      <Tabs defaultValue="all-recipes" className="mb-6">
-        <TabsList className="mb-4">
-          <TabsTrigger value="all-recipes" className="flex items-center gap-2">
-            <Utensils className="h-4 w-4" />
-            <span>All Recipes</span>
-          </TabsTrigger>
-          <TabsTrigger value="public" className="flex items-center gap-2">
-            <Eye className="h-4 w-4" />
-            <span>Public</span>
-          </TabsTrigger>
-          <TabsTrigger value="private" className="flex items-center gap-2">
-            <Filter className="h-4 w-4" />
-            <span>Private</span>
-          </TabsTrigger>
-          <TabsTrigger value="featured" className="flex items-center gap-2">
-            <Star className="h-4 w-4" />
-            <span>Featured</span>
-          </TabsTrigger>
-        </TabsList>
+          {/* Tabs for different recipe views */}
+          <Tabs defaultValue="all-recipes" className="mb-6">
+            <TabsList className="mb-4">
+              <TabsTrigger
+                value="all-recipes"
+                className="flex items-center gap-2"
+              >
+                <Utensils className="h-4 w-4" />
+                <span>All Recipes</span>
+              </TabsTrigger>
+              <TabsTrigger value="recent" className="flex items-center gap-2">
+                <Clock className="h-4 w-4" />
+                <span>Recent</span>
+              </TabsTrigger>
+              <TabsTrigger value="public" className="flex items-center gap-2">
+                <Eye className="h-4 w-4" />
+                <span>Public</span>
+              </TabsTrigger>
+              <TabsTrigger value="private" className="flex items-center gap-2">
+                <Filter className="h-4 w-4" />
+                <span>Private</span>
+              </TabsTrigger>
+              <TabsTrigger value="featured" className="flex items-center gap-2">
+                <Star className="h-4 w-4" />
+                <span>Featured</span>
+              </TabsTrigger>
+            </TabsList>
 
-        <TabsContent value="all-recipes">
-          {/* Search and Filters */}
-          <RecipeFilters
-            searchTerm={searchTerm}
-            setSearchTerm={setSearchTerm}
-            filterCategory={filterCategory}
-            setFilterCategory={setFilterCategory}
-            filterCuisine={filterCuisine}
-            setFilterCuisine={setFilterCuisine}
-            filterDifficulty={filterDifficulty}
-            setFilterDifficulty={setFilterDifficulty}
-            categories={categories}
-            cuisines={cuisines}
-          />
+            <TabsContent value="all-recipes">
+              {/* Search and Filters */}
+              <RecipeFilters
+                searchTerm={searchTerm}
+                setSearchTerm={setSearchTerm}
+                filterCategory={filterCategory}
+                setFilterCategory={setFilterCategory}
+                filterCuisine={filterCuisine}
+                setFilterCuisine={setFilterCuisine}
+                filterDifficulty={filterDifficulty}
+                setFilterDifficulty={setFilterDifficulty}
+                sortBy={sortBy}
+                setSortBy={setSortBy}
+                categories={categories}
+                cuisines={cuisines}
+              />
 
-          {/* Recipes Table */}
-          <Card className="mb-6">
-            <CardContent className="p-0">
-              <RecipeTable
-                recipes={currentRecipes}
+              {/* Recipes Table */}
+              <Card className="mb-6">
+                <CardContent className="p-0">
+                  <RecipeTable
+                    recipes={currentRecipes}
+                    isLoading={isLoading}
+                    currentPage={currentPage}
+                    setCurrentPage={setCurrentPage}
+                    handleSort={handleSort}
+                    handleViewRecipe={handleViewRecipe}
+                    handleEditRecipe={handleEditRecipe}
+                    handleDeleteRecipe={handleDeleteRecipe}
+                    handleTogglePublic={handleTogglePublic}
+                    itemsPerPage={itemsPerPage}
+                    indexOfFirstItem={indexOfFirstItem}
+                    totalRecipes={filteredRecipes.length}
+                  />
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="recent">
+              <RecentTabContent
+                recipes={
+                  recipes
+                    ?.sort(
+                      (a, b) =>
+                        new Date(b.createdAt || new Date()).getTime() -
+                        new Date(a.createdAt || new Date()).getTime()
+                    )
+                    .slice(0, 10) || []
+                }
                 isLoading={isLoading}
-                currentPage={currentPage}
-                setCurrentPage={setCurrentPage}
-                handleSort={handleSort}
                 handleViewRecipe={handleViewRecipe}
                 handleEditRecipe={handleEditRecipe}
-                handleDeleteRecipe={handleDeleteRecipe}
-                handleTogglePublic={handleTogglePublic}
-                itemsPerPage={itemsPerPage}
-                indexOfFirstItem={indexOfFirstItem}
-                totalRecipes={filteredRecipes.length}
               />
-            </CardContent>
-          </Card>
-        </TabsContent>
+            </TabsContent>
 
-        <TabsContent value="public">
-          <PublicTabContent
-            recipes={recipes?.filter((r) => r.isPublic) || []}
-            isLoading={isLoading}
-            handleViewRecipe={handleViewRecipe}
+            <TabsContent value="public">
+              <PublicTabContent
+                recipes={recipes?.filter((r) => r.isPublic) || []}
+                isLoading={isLoading}
+                handleViewRecipe={handleViewRecipe}
+                handleEditRecipe={handleEditRecipe}
+              />
+            </TabsContent>
+
+            <TabsContent value="private">
+              <PrivateTabContent
+                recipes={recipes?.filter((r) => !r.isPublic) || []}
+                isLoading={isLoading}
+                handleViewRecipe={handleViewRecipe}
+                handleTogglePublic={handleTogglePublic}
+              />
+            </TabsContent>
+
+            <TabsContent value="featured">
+              <FeaturedTabContent
+                recipes={
+                  recipes?.filter((r) => r.tags?.includes("featured")) || []
+                }
+                isLoading={isLoading}
+                handleViewRecipe={handleViewRecipe}
+              />
+            </TabsContent>
+          </Tabs>
+
+          {/* Recipe Details Dialog */}
+          <RecipeDetailsDialog
+            isOpen={isDialogOpen}
+            setIsOpen={setIsDialogOpen}
+            mode={dialogMode}
+            selectedRecipe={selectedRecipe}
+            handleSubmit={handleSubmit}
+            confirmDeleteRecipe={confirmDeleteRecipe}
             handleEditRecipe={handleEditRecipe}
+            formData={formData}
+            setFormData={setFormData}
+            errors={errors}
           />
-        </TabsContent>
-
-        <TabsContent value="private">
-          <PrivateTabContent
-            recipes={recipes?.filter((r) => !r.isPublic) || []}
-            isLoading={isLoading}
-            handleViewRecipe={handleViewRecipe}
-            handleTogglePublic={handleTogglePublic}
-          />
-        </TabsContent>
-
-        <TabsContent value="featured">
-          <FeaturedTabContent
-            recipes={recipes?.filter((r) => r.tags?.includes("featured")) || []}
-            isLoading={isLoading}
-            handleViewRecipe={handleViewRecipe}
-          />
-        </TabsContent>
-      </Tabs>
-
-      {/* Recipe Details Dialog */}
-      <RecipeDetailsDialog
-        isOpen={isDialogOpen}
-        setIsOpen={setIsDialogOpen}
-        mode={dialogMode}
-        selectedRecipe={selectedRecipe}
-        handleSubmit={handleSubmit}
-        confirmDeleteRecipe={confirmDeleteRecipe}
-        handleEditRecipe={handleEditRecipe}
-        formData={formData}
-        setFormData={setFormData}
-        errors={errors}
-      />
+        </div>
+      </div>
     </div>
   );
 }

@@ -21,15 +21,15 @@ import {
 } from "@/lib/api/admin/users";
 import { User } from "@/lib/types/user";
 import Link from "next/link";
-import { UserStatsCards } from "@/components/admin/users/UserStatsCards";
-import { UserFilters } from "@/components/admin/users/UserFilters";
-import { UserTable } from "@/components/admin/users/UserTable";
-import {
-  AdminsTabContent,
-  ShopOwnersTabContent,
-  UnverifiedUsersTabContent,
-} from "@/components/admin/users/UserTabContent";
-import { UserDetailsDialog } from "@/components/admin/users/UserDetailsDialog";
+import UserStatsCards from "@/components/admin/users/UserStatsCards";
+import UserFilters from "@/components/admin/users/UserFilters";
+import UserTable from "@/components/admin/users/UserTable";
+import { AdminsTabContent } from "@/components/admin/users/UserTabContent";
+import { ShopOwnersTabContent } from "@/components/admin/users/UserTabContent";
+import { UnverifiedUsersTabContent } from "@/components/admin/users/UserTabContent";
+import UserDetailsDialog from "@/components/admin/users/UserDetailsDialog";
+import { useRouter, useSearchParams } from "next/navigation";
+import Sidebar from "@/components/admin/SideBar";
 
 export default function UsersPage() {
   const { toast } = useToast();
@@ -54,6 +54,21 @@ export default function UsersPage() {
     type: "user",
     status: "unverified",
   });
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const [activeTab, setActiveTab] = useState("all-users");
+
+  useEffect(() => {
+    const filter = searchParams.get("filter");
+    if (filter === "unverified") {
+      setFilterStatus("unverified");
+      setFilterType("unverified");
+      setActiveTab("unverified");
+      // Remove the parameter from the URL
+      const newUrl = window.location.pathname;
+      router.replace(newUrl);
+    }
+  }, [searchParams, router]);
 
   // Form errors state
   const [errors, setErrors] = useState({
@@ -360,125 +375,142 @@ export default function UsersPage() {
   };
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
-      <div className="flex items-center justify-between mb-4">
-        <Link href={`/admin`}>
-          <Button variant="ghost" className="pl-0 mb-2 sm:mb-0">
-            <ChevronLeft className="w-4 h-4 mr-2" />
-            Back to Dashboard
-          </Button>
-        </Link>
-      </div>
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-800">User Management</h1>
-          <p className="text-gray-500">Manage and monitor user accounts</p>
-        </div>
-        <Button
-          onClick={handleAddUser}
-          className="mt-4 md:mt-0 flex items-center gap-2"
-        >
-          <Plus className="h-4 w-4" />
-          Add User
-        </Button>
-      </div>
+    <div className="flex">
+      <Sidebar />
+      <div className="flex-1 overflow-auto">
+        <div className="p-6 max-w-7xl mx-auto">
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-6">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-800">
+                User Management
+              </h1>
+              <p className="text-gray-500">Manage and monitor user accounts</p>
+            </div>
+            <Button
+              onClick={handleAddUser}
+              className="mt-4 md:mt-0 flex items-center gap-2"
+            >
+              <Plus className="h-4 w-4" />
+              Add User
+            </Button>
+          </div>
+          {/* Stats Cards */}
+          <UserStatsCards users={users} />
 
-      {/* Stats Cards */}
-      <UserStatsCards users={users} />
+          {/* Tabs for different user views */}
+          <Tabs
+            value={activeTab}
+            onValueChange={setActiveTab}
+            defaultValue="all-users"
+            className="mb-6"
+          >
+            <TabsList className="mb-4">
+              <TabsTrigger
+                value="all-users"
+                className="flex items-center gap-2"
+                onClick={() => {
+                  setFilterStatus("all");
+                  setFilterType("all");
+                  setFilterShopOwners(false);
+                }}
+              >
+                <Users className="h-4 w-4" />
+                <span>All Users</span>
+              </TabsTrigger>
+              <TabsTrigger
+                value="unverified"
+                className="flex items-center gap-2"
+              >
+                <UserX className="h-4 w-4" />
+                <span>Unverified</span>
+              </TabsTrigger>
+              <TabsTrigger
+                value="shop-owners"
+                className="flex items-center gap-2"
+              >
+                <Store className="h-4 w-4" />
+                <span>Shop Owners</span>
+              </TabsTrigger>
+              <TabsTrigger value="admins" className="flex items-center gap-2">
+                <ShieldCheck className="h-4 w-4" />
+                <span>Admins</span>
+              </TabsTrigger>
+            </TabsList>
 
-      {/* Tabs for different user views */}
-      <Tabs defaultValue="all-users" className="mb-6">
-        <TabsList className="mb-4">
-          <TabsTrigger value="all-users" className="flex items-center gap-2">
-            <Users className="h-4 w-4" />
-            <span>All Users</span>
-          </TabsTrigger>
-          <TabsTrigger value="unverified" className="flex items-center gap-2">
-            <UserX className="h-4 w-4" />
-            <span>Unverified</span>
-          </TabsTrigger>
-          <TabsTrigger value="shop-owners" className="flex items-center gap-2">
-            <Store className="h-4 w-4" />
-            <span>Shop Owners</span>
-          </TabsTrigger>
-          <TabsTrigger value="admins" className="flex items-center gap-2">
-            <ShieldCheck className="h-4 w-4" />
-            <span>Admins</span>
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="all-users">
-          {/* Search and Filters */}
-          <UserFilters
-            searchTerm={searchTerm}
-            setSearchTerm={setSearchTerm}
-            filterType={filterType}
-            setFilterType={setFilterType}
-            filterStatus={filterStatus}
-            setFilterStatus={setFilterStatus}
-            filterShopOwners={filterShopOwners}
-            setFilterShopOwners={setFilterShopOwners}
-          />
-
-          {/* Users Table */}
-          <Card className="mb-6">
-            <CardContent className="p-0">
-              <UserTable
-                users={currentUsers}
-                isLoading={isLoading}
-                currentPage={currentPage}
-                setCurrentPage={setCurrentPage}
-                handleSort={handleSort}
-                handleViewUser={handleViewUser}
-                handleEditUser={handleEditUser}
-                handleDeleteUser={handleDeleteUser}
-                handleVerifyUser={handleVerifyUser}
-                itemsPerPage={itemsPerPage}
-                indexOfFirstItem={indexOfFirstItem}
+            <TabsContent value="all-users">
+              {/* Search and Filters */}
+              <UserFilters
+                searchTerm={searchTerm}
+                setSearchTerm={setSearchTerm}
+                filterType={filterType}
+                setFilterType={setFilterType}
+                filterStatus={filterStatus}
+                setFilterStatus={setFilterStatus}
+                filterShopOwners={filterShopOwners}
+                setFilterShopOwners={setFilterShopOwners}
               />
-            </CardContent>
-          </Card>
-        </TabsContent>
 
-        <TabsContent value="unverified">
-          <UnverifiedUsersTabContent
-            users={users.filter((u) => u.status === "unverified")}
-            isLoading={isLoading}
-            handleVerifyUser={handleVerifyUser}
-            handleViewUser={handleViewUser}
+              {/* Users Table */}
+              <Card className="mb-6">
+                <CardContent className="p-0">
+                  <UserTable
+                    users={currentUsers}
+                    isLoading={isLoading}
+                    currentPage={currentPage}
+                    setCurrentPage={setCurrentPage}
+                    handleSort={handleSort}
+                    handleViewUser={handleViewUser}
+                    handleEditUser={handleEditUser}
+                    handleDeleteUser={handleDeleteUser}
+                    handleVerifyUser={handleVerifyUser}
+                    itemsPerPage={itemsPerPage}
+                    indexOfFirstItem={indexOfFirstItem}
+                  />
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="unverified">
+              <UnverifiedUsersTabContent
+                users={users.filter((u) => u.status === "unverified")}
+                isLoading={isLoading}
+                handleVerifyUser={handleVerifyUser}
+                handleViewUser={handleViewUser}
+              />
+            </TabsContent>
+
+            <TabsContent value="shop-owners">
+              <ShopOwnersTabContent
+                users={users.filter((u) => u.shops && u.shops.length > 0)}
+                isLoading={isLoading}
+                handleVerifyUser={handleVerifyUser}
+              />
+            </TabsContent>
+
+            <TabsContent value="admins">
+              <AdminsTabContent
+                users={users.filter((u) => u.type === "admin")}
+                isLoading={isLoading}
+                handleViewUser={handleViewUser}
+              />
+            </TabsContent>
+          </Tabs>
+
+          {/* User Details Dialog */}
+          <UserDetailsDialog
+            isOpen={isDialogOpen}
+            setIsOpen={setIsDialogOpen}
+            mode={dialogMode}
+            selectedUser={selectedUser}
+            handleSubmit={handleSubmit}
+            confirmDeleteUser={confirmDeleteUser}
+            handleEditUser={handleEditUser}
+            formData={formData}
+            setFormData={setFormData}
+            errors={errors}
           />
-        </TabsContent>
-
-        <TabsContent value="shop-owners">
-          <ShopOwnersTabContent
-            users={users.filter((u) => u.shops && u.shops.length > 0)}
-            isLoading={isLoading}
-            handleVerifyUser={handleVerifyUser}
-          />
-        </TabsContent>
-
-        <TabsContent value="admins">
-          <AdminsTabContent
-            users={users.filter((u) => u.type === "admin")}
-            isLoading={isLoading}
-            handleViewUser={handleViewUser}
-          />
-        </TabsContent>
-      </Tabs>
-
-      {/* User Details Dialog */}
-      <UserDetailsDialog
-        isOpen={isDialogOpen}
-        setIsOpen={setIsDialogOpen}
-        mode={dialogMode}
-        selectedUser={selectedUser}
-        handleSubmit={handleSubmit}
-        confirmDeleteUser={confirmDeleteUser}
-        handleEditUser={handleEditUser}
-        formData={formData}
-        setFormData={setFormData}
-        errors={errors}
-      />
+        </div>
+      </div>
     </div>
   );
 }

@@ -125,7 +125,7 @@ const UserStatusBadge = ({
   );
 };
 
-export function UserTable({
+export default function UserTable({
   users,
   isLoading,
   currentPage,

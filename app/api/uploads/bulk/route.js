@@ -54,11 +54,6 @@ export async function POST(request) {
   }
 }
 
-// Set the maximum request size
-export const config = {
-  api: {
-    bodyParser: {
-      sizeLimit: "50mb",
-    },
-  },
-};
+export const dynamic = 'force-dynamic';
+export const maxDuration = 60;
+export const fetchCache = 'force-no-store';

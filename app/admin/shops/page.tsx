@@ -32,10 +32,13 @@ import Link from "next/link";
 import { Shop } from "@/lib/types/shop";
 import { fetchShops } from "@/lib/api/admin/shops";
 import { fetchRecipeCountsWithShop } from "@/lib/api/admin/recipes";
-import { StatsCard } from "@/components/admin/StatsCard";
-import { ShopSearchFilters } from "@/components/admin/shops/ShopSearchFilters";
-import { ShopDetailView } from "@/components/admin/shops/ShopDetailView";
-import { ShopTable } from "@/components/admin/shops/ShopTable";
+import StatsCard from "@/components/admin/StatsCard";
+import ShopSearchFilters from "@/components/admin/shops/ShopSearchFilters";
+import ShopDetailView from "@/components/admin/shops/ShopDetailView";
+import ShopTable from "@/components/admin/shops/ShopTable";
+import { useRouter, useSearchParams } from "next/navigation";
+import Cookies from "js-cookie";
+import Sidebar from "@/components/admin/SideBar";
 
 // Function to approve shop
 const approveShop = async (shopId: string) => {
@@ -52,7 +55,7 @@ const deleteShop = async (shopId: string) => {
 };
 
 // Function to update shop
-const updateShop = async (shopId: string, shopData: Shop) => {
+const updateShop = async (shopId: string, shopData: Shop, userId: string) => {
   console.log("Updating shop:", shopId, shopData);
   // This would be an API call in the real implementation
   return { success: true };
@@ -73,6 +76,20 @@ export default function ShopsPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [dialogMode, setDialogMode] = useState("view"); // view, edit, delete
   const [currentTab, setCurrentTab] = useState("all-shops");
+  const [userId, setUserId] = useState<string | null>(null);
+  const searchParams = useSearchParams();
+  const router = useRouter();
+
+  useEffect(() => {
+    const filter = searchParams.get("filter");
+    if (filter === "pending") {
+      setCurrentTab("pending");
+      setFilterApproval("pending");
+      // Remove the parameter from the URL
+      const newUrl = window.location.pathname;
+      router.replace(newUrl);
+    }
+  }, [searchParams, router]);
 
   interface FormData {
     shopName: string;
@@ -140,6 +157,11 @@ export default function ShopsPage() {
             }))
           );
         }
+        const token = Cookies.get("token");
+        const userId = token
+          ? JSON.parse(atob(token.split(".")[1])).userId
+          : null;
+        setUserId(userId);
       } catch (error) {
         console.error("Failed to fetch shops:", error);
         toast({
@@ -298,8 +320,9 @@ export default function ShopsPage() {
           ...selectedShop,
           ...formData,
         };
-        if (!selectedShop._id) return;
-        await updateShop(selectedShop._id, updatedShop);
+        if (!selectedShop._id || !userId) return;
+
+        await updateShop(selectedShop._id, updatedShop, userId);
         setShops((prev) =>
           prev.map((shop) =>
             shop._id === selectedShop._id ? { ...shop, ...formData } : shop
@@ -532,442 +555,481 @@ export default function ShopsPage() {
   };
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
-      <div className="flex items-center justify-between mb-4">
-        <Link href={`/admin`}>
-          <Button variant="ghost" className="pl-0 mb-2 sm:mb-0">
-            <ChevronLeft className="w-4 h-4 mr-2" />
-            Back to Dashboard
-          </Button>
-        </Link>
-      </div>
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-800">Shop Management</h1>
-          <p className="text-gray-500">
-            Manage and monitor shops on the platform
-          </p>
-        </div>
-      </div>
-
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <StatsCard
-          title="Total Shops"
-          value={totalShopCount}
-          icon={Store}
-          delay={0.1}
-        />
-        <StatsCard
-          title="Pending Approval"
-          value={pendingApprovalCount}
-          icon={ThumbsDown}
-          iconColor="text-amber-500"
-          delay={0.2}
-        />
-        <StatsCard
-          title="Approved Shops"
-          value={approvedShopCount}
-          icon={ThumbsUp}
-          iconColor="text-green-500"
-          delay={0.3}
-        />
-        <StatsCard
-          title="Shops with Recipes"
-          value={shopsWithRecipesCount}
-          icon={FileText}
-          iconColor="text-purple-500"
-          delay={0.4}
-        />
-      </div>
-      {/* Tabs for different shop views */}
-      <Tabs
-        defaultValue="all-shops"
-        value={currentTab}
-        onValueChange={setCurrentTab}
-        className="mb-6"
-      >
-        <TabsList className="mb-4">
-          <TabsTrigger value="all-shops" className="flex items-center gap-2">
-            <Store className="h-4 w-4" />
-            <span>All Shops</span>
-          </TabsTrigger>
-          <TabsTrigger value="pending" className="flex items-center gap-2">
-            <ThumbsDown className="h-4 w-4" />
-            <span>Pending Approval</span>
-          </TabsTrigger>
-          <TabsTrigger value="approved" className="flex items-center gap-2">
-            <ThumbsUp className="h-4 w-4" />
-            <span>Approved</span>
-          </TabsTrigger>
-          <TabsTrigger value="with-recipes" className="flex items-center gap-2">
-            <FileText className="h-4 w-4" />
-            <span>With Recipes</span>
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="all-shops" className="space-y-4">
-          {/* Search and Filters */}
-          <ShopSearchFilters
-            searchTerm={searchTerm}
-            onSearchChange={setSearchTerm}
-            filterCategory={filterCategory}
-            onCategoryChange={setFilterCategory}
-            filterApproval={filterApproval}
-            onApprovalChange={setFilterApproval}
-            uniqueCategories={uniqueCategories}
-          />
-
-          {/* Shops Table */}
-          <Card>
-            <CardContent className="p-0">
-              <ShopTable
-                shops={currentShops}
-                isLoading={isLoading}
-                currentPage={currentPage}
-                setCurrentPage={setCurrentPage}
-                itemsPerPage={itemsPerPage}
-                sortField={sortField}
-                sortDirection={sortDirection}
-                onSort={handleSort}
-                onViewShop={handleViewShop}
-                onEditShop={handleEditShop}
-                onDeleteShop={handleDeleteShop}
-                onApproveShop={handleApproveShop}
-                formatDate={formatDate}
-                showRecipes={true}
-                showCreated={true}
-              />
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="pending" className="space-y-4">
-          {/* Similar structure as all-shops but with filtered data */}
-          <Card>
-            <CardContent className="p-0">
-              <ShopTable
-                shops={shops.filter((shop) => !shop.isApproved)}
-                isLoading={isLoading}
-                currentPage={currentPage}
-                setCurrentPage={setCurrentPage}
-                itemsPerPage={itemsPerPage}
-                sortField={sortField}
-                sortDirection={sortDirection}
-                onSort={handleSort}
-                onViewShop={handleViewShop}
-                onEditShop={handleEditShop}
-                onDeleteShop={handleDeleteShop}
-                onApproveShop={handleApproveShop}
-                formatDate={formatDate}
-                showRecipes={false}
-                showCreated={true}
-                emptyMessage="No pending shops to approve."
-              />
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="approved" className="space-y-4">
-          {/* Similar structure for approved shops */}
-          <Card>
-            <CardContent className="p-0">
-              <ShopTable
-                shops={shops.filter((shop) => shop.isApproved)}
-                isLoading={isLoading}
-                currentPage={currentPage}
-                setCurrentPage={setCurrentPage}
-                itemsPerPage={itemsPerPage}
-                sortField={sortField}
-                sortDirection={sortDirection}
-                onSort={handleSort}
-                onViewShop={handleViewShop}
-                onEditShop={handleEditShop}
-                onDeleteShop={handleDeleteShop}
-                onApproveShop={handleApproveShop}
-                formatDate={formatDate}
-                showRecipes={true}
-                showCreated={false}
-                emptyMessage="No approved shops found."
-              />
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="with-recipes" className="space-y-4">
-          {/* Similar structure for shops with recipes */}
-          <Card>
-            <CardContent className="p-0">
-              <ShopTable
-                shops={shops.filter((shop) => (shop.recipesCount ?? 0) > 0)}
-                isLoading={isLoading}
-                currentPage={currentPage}
-                setCurrentPage={setCurrentPage}
-                itemsPerPage={itemsPerPage}
-                sortField={sortField}
-                sortDirection={sortDirection}
-                onSort={handleSort}
-                onViewShop={handleViewShop}
-                onEditShop={handleEditShop}
-                onDeleteShop={handleDeleteShop}
-                onApproveShop={handleApproveShop}
-                formatDate={formatDate}
-                showRecipes={true}
-                showCreated={false}
-                emptyMessage="No shops with recipes found."
-              />
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
-
-      {/* View Shop Dialog */}
-      <Dialog
-        open={isDialogOpen && dialogMode === "view"}
-        onOpenChange={setIsDialogOpen}
-      >
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Shop Details</DialogTitle>
-          </DialogHeader>
-          {selectedShop && (
-            <ShopDetailView shop={selectedShop} formatDate={formatDate} />
-          )}
-          <DialogFooter className="flex justify-between gap-2">
+    <div className="flex">
+      <Sidebar />
+      <div className="flex-1 overflow-auto">
+        <div className="p-6 max-w-7xl mx-auto">
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-6">
             <div>
-              {selectedShop && !selectedShop.isApproved && (
-                <Button
-                  onClick={() =>
-                    selectedShop._id && handleApproveShop(selectedShop._id)
-                  }
-                  className="mr-2"
-                >
-                  <CheckCircle className="h-4 w-4 mr-2" />
-                  Approve Shop
-                </Button>
-              )}
-            </div>
-            <div className="flex gap-2">
-              <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
-                Close
-              </Button>
-              <Button
-                onClick={() => {
-                  setIsDialogOpen(false);
-                  setDialogMode("edit");
-                  setIsDialogOpen(true);
-                }}
-              >
-                <Edit className="h-4 w-4 mr-2" />
-                Edit
-              </Button>
-            </div>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Edit Shop Dialog */}
-      <Dialog
-        open={isDialogOpen && dialogMode === "edit"}
-        onOpenChange={setIsDialogOpen}
-      >
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Edit Shop</DialogTitle>
-            <DialogDescription>
-              Make changes to the shop information below.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="shopName">Shop Name</Label>
-                <Input
-                  id="shopName"
-                  value={formData.shopName}
-                  onChange={handleInputChange}
-                />
-                {errors.shopName && (
-                  <p className="text-sm text-red-500 mt-1">{errors.shopName}</p>
-                )}
-              </div>
-
-              <div>
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={formData.email}
-                  onChange={handleInputChange}
-                />
-                {errors.email && (
-                  <p className="text-sm text-red-500 mt-1">{errors.email}</p>
-                )}
-              </div>
-
-              <div>
-                <Label htmlFor="phone">Phone</Label>
-                <Input
-                  id="phone"
-                  value={formData.phone}
-                  onChange={handleInputChange}
-                />
-                {errors.phone && (
-                  <p className="text-sm text-red-500 mt-1">{errors.phone}</p>
-                )}
-              </div>
-
-              <div>
-                <Label htmlFor="description">Description</Label>
-                <Textarea
-                  id="description"
-                  rows={3}
-                  value={formData.description}
-                  onChange={handleInputChange}
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="businessHours">Business Hours</Label>
-                <Input
-                  id="businessHours"
-                  value={formData.businessHours}
-                  onChange={handleInputChange}
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="categories">Categories</Label>
-                <Input
-                  id="categories"
-                  value={formData.categories.join(", ")}
-                  onChange={(e) => handleCategoryInput(e.target.value)}
-                  placeholder="Separate categories with commas"
-                />
-              </div>
-
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="isApproved"
-                  checked={formData.isApproved}
-                  onCheckedChange={handleCheckboxChange}
-                />
-                <Label htmlFor="isApproved">Approved Shop</Label>
-              </div>
-            </div>
-
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="address">Address</Label>
-                <Input
-                  id="address"
-                  value={formData.address}
-                  onChange={handleInputChange}
-                />
-                {errors.address && (
-                  <p className="text-sm text-red-500 mt-1">{errors.address}</p>
-                )}
-              </div>
-
-              <div>
-                <Label htmlFor="city">City</Label>
-                <Input
-                  id="city"
-                  value={formData.city}
-                  onChange={handleInputChange}
-                />
-                {errors.city && (
-                  <p className="text-sm text-red-500 mt-1">{errors.city}</p>
-                )}
-              </div>
-
-              <div>
-                <Label htmlFor="state">State</Label>
-                <Input
-                  id="state"
-                  value={formData.state}
-                  onChange={handleInputChange}
-                />
-                {errors.state && (
-                  <p className="text-sm text-red-500 mt-1">{errors.state}</p>
-                )}
-              </div>
-
-              <div>
-                <Label htmlFor="zipCode">ZIP Code</Label>
-                <Input
-                  id="zipCode"
-                  value={formData.zipCode}
-                  onChange={handleInputChange}
-                />
-                {errors.zipCode && (
-                  <p className="text-sm text-red-500 mt-1">{errors.zipCode}</p>
-                )}
-              </div>
-
-              <div>
-                <Label htmlFor="country">Country</Label>
-                <Input
-                  id="country"
-                  value={formData.country}
-                  onChange={handleInputChange}
-                />
-                {errors.country && (
-                  <p className="text-sm text-red-500 mt-1">{errors.country}</p>
-                )}
-              </div>
-
-              <div className="mt-4 pt-4 border-t">
-                <h4 className="text-sm font-semibold mb-2">Shop Location</h4>
-                <p className="text-sm text-gray-600 mb-2">
-                  Location coordinates can be updated through the map interface.
-                </p>
-                {/* Map placeholder - in a real app, you'd have a map interface for selecting coordinates */}
-                <div className="bg-gray-100 h-32 rounded-md flex items-center justify-center">
-                  <Map className="h-5 w-5 text-gray-400 mr-2" />
-                  <span className="text-gray-500">Map location selector</span>
-                </div>
-              </div>
+              <h1 className="text-2xl font-bold text-gray-800">
+                Shop Management
+              </h1>
+              <p className="text-gray-500">
+                Manage and monitor shops on the platform
+              </p>
             </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleSubmit}>Save Changes</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
 
-      {/* Delete Shop Confirmation Dialog */}
-      <Dialog
-        open={isDialogOpen && dialogMode === "delete"}
-        onOpenChange={setIsDialogOpen}
-      >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Confirm Deletion</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to delete{" "}
-              <span className="font-semibold">{selectedShop?.shopName}</span>?
-              This action cannot be undone.
-            </DialogDescription>
-          </DialogHeader>
-          <p className="text-gray-500 text-sm">
-            This will permanently remove the shop and all associated data from
-            the system.
-          </p>
-          <DialogFooter className="gap-2 sm:justify-between sm:space-x-0">
-            <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button variant="destructive" onClick={confirmDeleteShop}>
-              <Trash2 className="h-4 w-4 mr-2" />
-              Delete Shop
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          {/* Stats Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <StatsCard
+              title="Total Shops"
+              value={totalShopCount}
+              icon={Store}
+              delay={0.1}
+            />
+            <StatsCard
+              title="Pending Approval"
+              value={pendingApprovalCount}
+              icon={ThumbsDown}
+              iconColor="text-amber-500"
+              delay={0.2}
+            />
+            <StatsCard
+              title="Approved Shops"
+              value={approvedShopCount}
+              icon={ThumbsUp}
+              iconColor="text-green-500"
+              delay={0.3}
+            />
+            <StatsCard
+              title="Shops with Recipes"
+              value={shopsWithRecipesCount}
+              icon={FileText}
+              iconColor="text-purple-500"
+              delay={0.4}
+            />
+          </div>
+          {/* Tabs for different shop views */}
+          <Tabs
+            defaultValue="all-shops"
+            value={currentTab}
+            onValueChange={setCurrentTab}
+            className="mb-6"
+          >
+            <TabsList className="mb-4">
+              <TabsTrigger
+                value="all-shops"
+                className="flex items-center gap-2"
+                onClick={() => {
+                  setFilterApproval("all");
+                  setFilterHasRecipes(false);
+                }}
+              >
+                <Store className="h-4 w-4" />
+                <span>All Shops</span>
+              </TabsTrigger>
+              <TabsTrigger value="pending" className="flex items-center gap-2">
+                <ThumbsDown className="h-4 w-4" />
+                <span>Pending Approval</span>
+              </TabsTrigger>
+              <TabsTrigger value="approved" className="flex items-center gap-2">
+                <ThumbsUp className="h-4 w-4" />
+                <span>Approved</span>
+              </TabsTrigger>
+              <TabsTrigger
+                value="with-recipes"
+                className="flex items-center gap-2"
+              >
+                <FileText className="h-4 w-4" />
+                <span>With Recipes</span>
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="all-shops" className="space-y-4">
+              {/* Search and Filters */}
+              <ShopSearchFilters
+                searchTerm={searchTerm}
+                onSearchChange={setSearchTerm}
+                filterCategory={filterCategory}
+                onCategoryChange={setFilterCategory}
+                filterApproval={filterApproval}
+                onApprovalChange={setFilterApproval}
+                uniqueCategories={uniqueCategories}
+              />
+
+              {/* Shops Table */}
+              <Card>
+                <CardContent className="p-0">
+                  <ShopTable
+                    shops={currentShops}
+                    isLoading={isLoading}
+                    currentPage={currentPage}
+                    setCurrentPage={setCurrentPage}
+                    itemsPerPage={itemsPerPage}
+                    sortField={sortField}
+                    sortDirection={sortDirection}
+                    onSort={handleSort}
+                    onViewShop={handleViewShop}
+                    onEditShop={handleEditShop}
+                    onDeleteShop={handleDeleteShop}
+                    onApproveShop={handleApproveShop}
+                    formatDate={formatDate}
+                    showRecipes={true}
+                    showCreated={true}
+                  />
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="pending" className="space-y-4">
+              {/* Similar structure as all-shops but with filtered data */}
+              <Card>
+                <CardContent className="p-0">
+                  <ShopTable
+                    shops={shops.filter((shop) => !shop.isApproved)}
+                    isLoading={isLoading}
+                    currentPage={currentPage}
+                    setCurrentPage={setCurrentPage}
+                    itemsPerPage={itemsPerPage}
+                    sortField={sortField}
+                    sortDirection={sortDirection}
+                    onSort={handleSort}
+                    onViewShop={handleViewShop}
+                    onEditShop={handleEditShop}
+                    onDeleteShop={handleDeleteShop}
+                    onApproveShop={handleApproveShop}
+                    formatDate={formatDate}
+                    showRecipes={false}
+                    showCreated={true}
+                    emptyMessage="No pending shops to approve."
+                  />
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="approved" className="space-y-4">
+              {/* Similar structure for approved shops */}
+              <Card>
+                <CardContent className="p-0">
+                  <ShopTable
+                    shops={shops.filter((shop) => shop.isApproved)}
+                    isLoading={isLoading}
+                    currentPage={currentPage}
+                    setCurrentPage={setCurrentPage}
+                    itemsPerPage={itemsPerPage}
+                    sortField={sortField}
+                    sortDirection={sortDirection}
+                    onSort={handleSort}
+                    onViewShop={handleViewShop}
+                    onEditShop={handleEditShop}
+                    onDeleteShop={handleDeleteShop}
+                    onApproveShop={handleApproveShop}
+                    formatDate={formatDate}
+                    showRecipes={true}
+                    showCreated={false}
+                    emptyMessage="No approved shops found."
+                  />
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="with-recipes" className="space-y-4">
+              {/* Similar structure for shops with recipes */}
+              <Card>
+                <CardContent className="p-0">
+                  <ShopTable
+                    shops={shops.filter((shop) => (shop.recipesCount ?? 0) > 0)}
+                    isLoading={isLoading}
+                    currentPage={currentPage}
+                    setCurrentPage={setCurrentPage}
+                    itemsPerPage={itemsPerPage}
+                    sortField={sortField}
+                    sortDirection={sortDirection}
+                    onSort={handleSort}
+                    onViewShop={handleViewShop}
+                    onEditShop={handleEditShop}
+                    onDeleteShop={handleDeleteShop}
+                    onApproveShop={handleApproveShop}
+                    formatDate={formatDate}
+                    showRecipes={true}
+                    showCreated={false}
+                    emptyMessage="No shops with recipes found."
+                  />
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
+
+          {/* View Shop Dialog */}
+          <Dialog
+            open={isDialogOpen && dialogMode === "view"}
+            onOpenChange={setIsDialogOpen}
+          >
+            <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Shop Details</DialogTitle>
+              </DialogHeader>
+              {selectedShop && (
+                <ShopDetailView shop={selectedShop} formatDate={formatDate} />
+              )}
+              <DialogFooter className="flex justify-between gap-2">
+                <div>
+                  {selectedShop && !selectedShop.isApproved && (
+                    <Button
+                      onClick={() =>
+                        selectedShop._id && handleApproveShop(selectedShop._id)
+                      }
+                      className="mr-2"
+                    >
+                      <CheckCircle className="h-4 w-4 mr-2" />
+                      Approve Shop
+                    </Button>
+                  )}
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => setIsDialogOpen(false)}
+                  >
+                    Close
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      setIsDialogOpen(false);
+                      setDialogMode("edit");
+                      setIsDialogOpen(true);
+                    }}
+                  >
+                    <Edit className="h-4 w-4 mr-2" />
+                    Edit
+                  </Button>
+                </div>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+
+          {/* Edit Shop Dialog */}
+          <Dialog
+            open={isDialogOpen && dialogMode === "edit"}
+            onOpenChange={setIsDialogOpen}
+          >
+            <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Edit Shop</DialogTitle>
+                <DialogDescription>
+                  Make changes to the shop information below.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="shopName">Shop Name</Label>
+                    <Input
+                      id="shopName"
+                      value={formData.shopName}
+                      onChange={handleInputChange}
+                    />
+                    {errors.shopName && (
+                      <p className="text-sm text-red-500 mt-1">
+                        {errors.shopName}
+                      </p>
+                    )}
+                  </div>
+
+                  <div>
+                    <Label htmlFor="email">Email</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      value={formData.email}
+                      onChange={handleInputChange}
+                    />
+                    {errors.email && (
+                      <p className="text-sm text-red-500 mt-1">
+                        {errors.email}
+                      </p>
+                    )}
+                  </div>
+
+                  <div>
+                    <Label htmlFor="phone">Phone</Label>
+                    <Input
+                      id="phone"
+                      value={formData.phone}
+                      onChange={handleInputChange}
+                    />
+                    {errors.phone && (
+                      <p className="text-sm text-red-500 mt-1">
+                        {errors.phone}
+                      </p>
+                    )}
+                  </div>
+
+                  <div>
+                    <Label htmlFor="description">Description</Label>
+                    <Textarea
+                      id="description"
+                      rows={3}
+                      value={formData.description}
+                      onChange={handleInputChange}
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="businessHours">Business Hours</Label>
+                    <Input
+                      id="businessHours"
+                      value={formData.businessHours}
+                      onChange={handleInputChange}
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="categories">Categories</Label>
+                    <Input
+                      id="categories"
+                      value={formData.categories.join(", ")}
+                      onChange={(e) => handleCategoryInput(e.target.value)}
+                      placeholder="Separate categories with commas"
+                    />
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="isApproved"
+                      checked={formData.isApproved}
+                      onCheckedChange={handleCheckboxChange}
+                    />
+                    <Label htmlFor="isApproved">Approved Shop</Label>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="address">Address</Label>
+                    <Input
+                      id="address"
+                      value={formData.address}
+                      onChange={handleInputChange}
+                    />
+                    {errors.address && (
+                      <p className="text-sm text-red-500 mt-1">
+                        {errors.address}
+                      </p>
+                    )}
+                  </div>
+
+                  <div>
+                    <Label htmlFor="city">City</Label>
+                    <Input
+                      id="city"
+                      value={formData.city}
+                      onChange={handleInputChange}
+                    />
+                    {errors.city && (
+                      <p className="text-sm text-red-500 mt-1">{errors.city}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <Label htmlFor="state">State</Label>
+                    <Input
+                      id="state"
+                      value={formData.state}
+                      onChange={handleInputChange}
+                    />
+                    {errors.state && (
+                      <p className="text-sm text-red-500 mt-1">
+                        {errors.state}
+                      </p>
+                    )}
+                  </div>
+
+                  <div>
+                    <Label htmlFor="zipCode">ZIP Code</Label>
+                    <Input
+                      id="zipCode"
+                      value={formData.zipCode}
+                      onChange={handleInputChange}
+                    />
+                    {errors.zipCode && (
+                      <p className="text-sm text-red-500 mt-1">
+                        {errors.zipCode}
+                      </p>
+                    )}
+                  </div>
+
+                  <div>
+                    <Label htmlFor="country">Country</Label>
+                    <Input
+                      id="country"
+                      value={formData.country}
+                      onChange={handleInputChange}
+                    />
+                    {errors.country && (
+                      <p className="text-sm text-red-500 mt-1">
+                        {errors.country}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="mt-4 pt-4 border-t">
+                    <h4 className="text-sm font-semibold mb-2">
+                      Shop Location
+                    </h4>
+                    <p className="text-sm text-gray-600 mb-2">
+                      Location coordinates can be updated through the map
+                      interface.
+                    </p>
+                    {/* Map placeholder - in a real app, you'd have a map interface for selecting coordinates */}
+                    <div className="bg-gray-100 h-32 rounded-md flex items-center justify-center">
+                      <Map className="h-5 w-5 text-gray-400 mr-2" />
+                      <span className="text-gray-500">
+                        Map location selector
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <DialogFooter>
+                <Button
+                  variant="outline"
+                  onClick={() => setIsDialogOpen(false)}
+                >
+                  Cancel
+                </Button>
+                <Button onClick={handleSubmit}>Save Changes</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+
+          {/* Delete Shop Confirmation Dialog */}
+          <Dialog
+            open={isDialogOpen && dialogMode === "delete"}
+            onOpenChange={setIsDialogOpen}
+          >
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Confirm Deletion</DialogTitle>
+                <DialogDescription>
+                  Are you sure you want to delete{" "}
+                  <span className="font-semibold">
+                    {selectedShop?.shopName}
+                  </span>
+                  ? This action cannot be undone.
+                </DialogDescription>
+              </DialogHeader>
+              <p className="text-gray-500 text-sm">
+                This will permanently remove the shop and all associated data
+                from the system.
+              </p>
+              <DialogFooter className="gap-2 sm:justify-between sm:space-x-0">
+                <Button
+                  variant="outline"
+                  onClick={() => setIsDialogOpen(false)}
+                >
+                  Cancel
+                </Button>
+                <Button variant="destructive" onClick={confirmDeleteShop}>
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Delete Shop
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
+      </div>
     </div>
   );
 }

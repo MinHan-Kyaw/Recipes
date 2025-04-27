@@ -56,6 +56,8 @@ export default function Signup() {
         name: formData.name,
         email: formData.email,
         password: formData.password,
+        type: 'user',
+        status: 'unverified'
       });
 
       if (!response.success) {

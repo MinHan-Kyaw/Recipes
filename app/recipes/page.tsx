@@ -24,3 +24,5 @@ export default function RecipesPage() {
     </main>
   );
 }
+
+export const dynamic = "force-dynamic";

@@ -7,7 +7,7 @@ type ShopStatusBadgeProps = {
   showIcon?: boolean;
 };
 
-export function ShopStatusBadge({
+export default function ShopStatusBadge({
   isApproved,
   className = "",
   showIcon = true,

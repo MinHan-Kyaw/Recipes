@@ -96,7 +96,7 @@ const CreateRecipePage: React.FC = () => {
       };
 
       // Create the recipe
-      const result = await createRecipe(finalRecipeData);
+      const result = await createRecipe(finalRecipeData,userId);
 
       if (!result) {
         throw new Error("Failed to create recipe");

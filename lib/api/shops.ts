@@ -1,4 +1,5 @@
 import { Shop } from "../types/shop";
+import { createActivityLog } from "./activitylog";
 
 /**
  * Fetch all shops that belong to a specific user
@@ -78,8 +79,18 @@ export async function createShop(shopData: Shop, userId: string) {
 
       if (!userUpdateResponse.ok) {
         console.error("Created shop but failed to update user's shops array");
-        // You might want to handle this case - maybe delete the shop?
       }
+    }
+    if (response.status === 200) {
+      await createActivityLog({
+        user: userId,
+        userName: shopData.shopName,
+        actionType: "pending",
+        detail: `New shop registration`,
+        entityType: "shop",
+        entityName: shopData.shopName + " requested approval",
+        entityId: createdShop._id,
+      });
     }
 
     return createdShop;
@@ -95,7 +106,11 @@ export async function createShop(shopData: Shop, userId: string) {
  * @param {Shop} shopData - The updated shop data
  * @returns {Promise<Shop>} - Promise resolving to the updated shop
  */
-export async function updateShop(shopId: string, shopData: Shop) {
+export async function updateShop(
+  shopId: string,
+  shopData: Shop,
+  userId: string
+) {
   try {
     const response = await fetch(`/api/shops/${shopId}`, {
       method: "PUT",
@@ -108,8 +123,19 @@ export async function updateShop(shopId: string, shopData: Shop) {
     if (!response.ok) {
       throw new Error("Failed to update shop");
     }
-
     const data = await response.json();
+    if (response.status === 200) {
+      await createActivityLog({
+        user: userId,
+        userName: shopData.shopName,
+        actionType: "update",
+        detail: `Changed business information`,
+        entityType: "shop",
+        entityName: shopData.shopName + " updated information",
+        entityId: data.data._id,
+      });
+    }
+
     return data.success ? data.data : null;
   } catch (error) {
     console.error("Error updating shop:", error);

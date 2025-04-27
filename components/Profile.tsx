@@ -229,7 +229,7 @@ export default function ProfilePage() {
               {tempImageFile && (
                 <p className="text-sm flex items-center gap-2 text-amber-600">
                   <AlertTriangle className="h-4 w-4" />
-                  Image selected. Click "Save Changes" to upload.
+                  Image selected. Click &quot;Save Changes&quot; to upload.
                 </p>
               )}
             </CardContent>

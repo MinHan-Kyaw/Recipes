@@ -1,4 +1,5 @@
 import { Recipe } from "../types/recipe";
+import { createActivityLog } from "./activitylog";
 
 // Helper to get base URL that works in both client and server components
 const getBaseUrl = () => {
@@ -16,7 +17,7 @@ const getBaseUrl = () => {
 };
 
 // Create a new recipe
-export async function createRecipe(recipeData: Recipe) {
+export async function createRecipe(recipeData: Recipe, userId: string) {
   try {
     const baseUrl = getBaseUrl();
     const response = await fetch(`${baseUrl}/api/recipes`, {
@@ -26,8 +27,18 @@ export async function createRecipe(recipeData: Recipe) {
       },
       body: JSON.stringify(recipeData),
     });
-
     const data = await response.json();
+    if (response.status === 200) {
+      await createActivityLog({
+        user: userId,
+        userName: recipeData.author?.name || "Unknown",
+        actionType: "create",
+        detail: "New recipe published by " + recipeData.author,
+        entityType: "recipe",
+        entityName: recipeData.title,
+        entityId: data.data._id,
+      });
+    }
 
     if (!response.ok) {
       throw new Error(data.error || "Failed to create recipe");

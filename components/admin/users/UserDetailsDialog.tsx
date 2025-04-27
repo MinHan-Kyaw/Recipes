@@ -64,7 +64,7 @@ interface UserDetailsDialogProps {
   };
 }
 
-export function UserDetailsDialog({
+export default function UserDetailsDialog({
   isOpen,
   setIsOpen,
   mode,

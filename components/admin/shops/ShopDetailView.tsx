@@ -13,7 +13,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ShopStatusBadge } from "./ShopStatusBadge";
+import ShopStatusBadge from "./ShopStatusBadge";
 import { Shop } from "@/lib/types/shop";
 
 interface ShopDetailViewProps {
@@ -21,7 +21,10 @@ interface ShopDetailViewProps {
   formatDate: (date: string | Date) => string;
 }
 
-export function ShopDetailView({ shop, formatDate }: ShopDetailViewProps) {
+export default function ShopDetailView({
+  shop,
+  formatDate,
+}: ShopDetailViewProps) {
   // Get shop logo initials
   const getShopInitials = (name: string) => {
     if (!name) return "";

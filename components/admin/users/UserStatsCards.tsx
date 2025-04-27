@@ -1,12 +1,12 @@
 import { Users, UserX, Store, ShieldCheck } from "lucide-react";
 import { User } from "@/lib/types/user";
-import { StatsCard } from "../StatsCard";
+import  StatsCard from "../StatsCard";
 
 interface UserStatsCardsProps {
   users: User[];
 }
 
-export function UserStatsCards({ users }: UserStatsCardsProps) {
+export default function UserStatsCards({ users }: UserStatsCardsProps) {
   // Calculate stats
   const totalUserCount = users.length;
   const unverifiedUserCount = users.filter(

@@ -20,6 +20,8 @@ interface RecipeFiltersProps {
   setFilterCuisine: (value: string) => void;
   filterDifficulty: string;
   setFilterDifficulty: (value: string) => void;
+  sortBy: string;
+  setSortBy: (value: string) => void;
   categories: string[];
   cuisines: string[];
 }
@@ -33,6 +35,8 @@ export const RecipeFilters = ({
   setFilterCuisine,
   filterDifficulty,
   setFilterDifficulty,
+  sortBy,
+  setSortBy,
   categories,
   cuisines,
 }: RecipeFiltersProps) => {
@@ -52,6 +56,26 @@ export const RecipeFilters = ({
                 className="pl-8"
               />
             </div>
+          </div>
+          <div className="flex flex-col space-y-1.5">
+            <Label htmlFor="sort">Sort By</Label>
+            <Select value={sortBy} onValueChange={setSortBy}>
+              <SelectTrigger id="sort">
+                <SelectValue placeholder="Sort by" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="newest">Newest First</SelectItem>
+                <SelectItem value="oldest">Oldest First</SelectItem>
+                <SelectItem value="title-asc">Title A-Z</SelectItem>
+                <SelectItem value="title-desc">Title Z-A</SelectItem>
+                <SelectItem value="prep-asc">
+                  Prep Time (Low to High)
+                </SelectItem>
+                <SelectItem value="prep-desc">
+                  Prep Time (High to Low)
+                </SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           <div className="flex flex-col space-y-1.5">
             <Label htmlFor="category">Category</Label>

@@ -10,7 +10,7 @@ interface StatsCardProps {
   delay?: number;
 }
 
-export function StatsCard({
+export default function StatsCard({
   title,
   value,
   icon: Icon,
