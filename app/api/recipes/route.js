@@ -14,7 +14,7 @@ export async function GET(request) {
     if (shopId) {
       query.shop = shopId;
     }
-    query.isPublished = true;
+    query.isPublic = true;
     let recipeQuery = Recipe.find(query)
       .sort({ createdAt: -1 })
       .populate({

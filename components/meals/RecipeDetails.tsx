@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Recipe } from "@/lib/types/recipe";
+import RatingsAndComments from "./RatingsAndComments";
 
 export default function MealDetails({ meal }: { meal: Recipe }) {
   if (!meal) {
@@ -257,6 +258,23 @@ export default function MealDetails({ meal }: { meal: Recipe }) {
                   </div>
                 </motion.div>
               )}
+            </CardContent>
+          </Card>
+        </motion.div>
+        <motion.div
+          className="max-w-4xl mx-auto mt-16"
+          initial={{ opacity: 0, y: 40 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 1.2 }}
+        >
+          <Card>
+            <CardHeader>
+              <h3 className="text-2xl font-semibold text-gray-800">
+                Ratings & Reviews
+              </h3>
+            </CardHeader>
+            <CardContent>
+              {meal._id && <RatingsAndComments recipeId={meal._id} />}
             </CardContent>
           </Card>
         </motion.div>

@@ -58,7 +58,11 @@ export async function POST(request) {
       maxAge: 86400,
       path: "/",
     });
-
+    const userData = {
+      id: user._id,
+      name: user.name,
+      email: user.email,
+    };
     return response;
   } catch (error) {
     console.error("Error logging in:", error);

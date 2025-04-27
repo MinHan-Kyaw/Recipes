@@ -24,7 +24,7 @@ export interface Recipe {
   author?: {
     id: string;
     name: string;
-  }
+  };
   createdAt?: Date;
   updatedAt?: Date;
   tags?: string[];
@@ -36,4 +36,6 @@ export interface Recipe {
     name: string;
   };
   shop?: string | null;
+  averageRating?: number;
+  ratingsCount?: number;
 }

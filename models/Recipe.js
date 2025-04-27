@@ -105,6 +105,14 @@ const RecipeSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "Shop",
   },
+  averageRating: {
+    type: Number,
+    default: null,
+  },
+  ratingsCount: {
+    type: Number,
+    default: 0,
+  },
 });
 
 // Add a pre-save hook to update the updatedAt field

@@ -92,7 +92,7 @@ export default function MainHeader() {
           >
             <Image
               src={logoImg.src}
-              alt="NextLevel Food logo"
+              alt="Recipe Food logo"
               priority
               width={48}
               height={48}
@@ -112,7 +112,7 @@ export default function MainHeader() {
               }}
               transition={{ duration: 0.2 }}
             >
-              NextLevel Food
+              Recipe
             </motion.span>
           </Link>
         </motion.div>

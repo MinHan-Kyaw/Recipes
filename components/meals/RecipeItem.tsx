@@ -9,7 +9,7 @@ import {
   CardContent,
   CardFooter,
 } from "@/components/ui/card";
-import { Clock } from "lucide-react";
+import { Clock, Star } from "lucide-react";
 import { Recipe } from "@/lib/types/recipe";
 
 interface RecipeItemProps {
@@ -67,6 +67,25 @@ export default function RecipeItem({ meal }: RecipeItemProps) {
         </p>
       </CardContent>
       <CardFooter className="text-left flex items-center text-primary justify-between">
+        <div className="flex items-center mr-2">
+          <div className="flex items-center space-x-1">
+            <Star
+              className={`h-4 w-4 ${
+                meal.averageRating
+                  ? "text-yellow-400 fill-yellow-400"
+                  : "text-gray-300"
+              }`}
+            />
+            <span className="text-sm">
+              {meal.averageRating ? meal.averageRating.toFixed(1) : "N/A"}
+            </span>
+          </div>
+          {meal.ratingsCount && meal.ratingsCount > 0 && (
+            <span className="text-xs text-gray-500 ml-1">
+              ({meal.ratingsCount})
+            </span>
+          )}
+        </div>
         <div className="flex items-center">
           <Clock className="mr-2 h-4 w-4" />
           <span>{totalTime} mins</span>
