@@ -16,6 +16,7 @@ import {
   Bookmark,
   Settings,
   ShoppingBag,
+  Heart,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -241,6 +242,15 @@ export default function MainHeader() {
                         My Recipes
                       </Link>
                     </DropdownMenuItem>
+                    <DropdownMenuItem
+                      asChild
+                      className="flex items-center gap-2 py-2 cursor-pointer"
+                    >
+                      <Link href="/my-favorites">
+                        <Heart className="w-4 h-4" />
+                        My Favorites
+                      </Link>
+                    </DropdownMenuItem>
 
                     {user.shops && user.shops.length > 0 && (
                       <DropdownMenuItem
@@ -394,6 +404,13 @@ export default function MainHeader() {
                 >
                   <Bookmark className="w-4 h-4" />
                   My Recipes
+                </Link>
+                <Link
+                  href="/my-favorites"
+                  className="flex items-center gap-2 px-4 py-2 hover:bg-primary/10 rounded-lg text-gray-800"
+                >
+                  <Heart className="w-4 h-4" />
+                  My Favorites
                 </Link>
 
                 {user.shops && user.shops.length > 0 && (

@@ -46,7 +46,6 @@ export async function GET(request) {
 
     // Find shops matching the query
     const shops = await Shop.find(query).sort({ createdAt: -1 });
-
     return NextResponse.json({ success: true, data: shops });
   } catch (error) {
     console.error("Error fetching shops:", error);

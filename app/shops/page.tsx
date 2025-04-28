@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import debounce from "lodash/debounce";
 import { Loader, Store, Phone, MapPin, Info, Clock } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -11,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { motion } from "framer-motion";
+import { fetchAllShops, fetchShopsWithCoordinates } from "@/lib/api/shops";
 
 interface Shop {
   _id: string;
@@ -43,6 +43,7 @@ export default function ShopsPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [allCategories, setAllCategories] = useState<string[]>([]);
+  const [locationDenied, setLocationDenied] = useState(false);
 
   useEffect(() => {
     // Get user's current location
@@ -52,17 +53,16 @@ export default function ShopsPage() {
           const { latitude, longitude } = position.coords;
           setCurrentLocation({ lat: latitude, lng: longitude });
           setMapLoaded(true);
+          setLocationDenied(false);
         },
         (error) => {
           console.error("Error getting location:", error);
-          // Default to a location (e.g., New York City)
-          setCurrentLocation({ lat: 40.7128, lng: -74.006 });
+          setLocationDenied(true);
           setMapLoaded(true);
         }
       );
     } else {
-      // Geolocation not supported
-      setCurrentLocation({ lat: 40.7128, lng: -74.006 });
+      setLocationDenied(true);
       setMapLoaded(true);
     }
   }, []);
@@ -98,21 +98,24 @@ export default function ShopsPage() {
     setError(null);
 
     try {
-      const response = await fetch(
-        `/api/shops/coordinates/${currentLocation.lat}/${currentLocation.lng}`
-      );
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch shops");
+      let data;
+      if (
+        locationDenied ||
+        (currentLocation.lat === 0 && currentLocation.lng === 0)
+      ) {
+        data = await fetchAllShops();
+        console.log("Fetched all shops UI:", data);
+      } else {
+        data = await fetchShopsWithCoordinates(
+          currentLocation.lat,
+          currentLocation.lng
+        );
       }
 
-      const data = await response.json();
-      setShops(data.shops);
+      setShops(data);
 
       // Extract all unique categories
-      const categories = data.shops.flatMap(
-        (shop: Shop) => shop.categories || []
-      );
+      const categories = data.flatMap((shop: Shop) => shop.categories || []);
       setAllCategories(Array.from(new Set(categories)));
     } catch (err) {
       setError("Failed to load shops. Please try again later.");
@@ -120,7 +123,7 @@ export default function ShopsPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [currentLocation]);
+  }, [currentLocation, locationDenied]);
 
   useEffect(() => {
     // Fetch shops when location is available and has changed significantly
@@ -140,6 +143,7 @@ export default function ShopsPage() {
         fetchShops();
       }
     }
+    fetchShops();
   }, [
     mapLoaded,
     currentLocation.lat,
@@ -195,6 +199,34 @@ export default function ShopsPage() {
   const item = {
     hidden: { y: 20, opacity: 0 },
     show: { y: 0, opacity: 1 },
+  };
+
+  const requestLocationPermission = () => {
+    navigator.permissions
+      .query({ name: "geolocation" })
+      .then((permissionStatus) => {
+        if (permissionStatus.state === "denied") {
+          // Permission is denied, show instructions to the user
+          alert(
+            "Location permission is denied. Please enable location access in your browser settings and try again."
+          );
+        } else {
+          // Permission is granted or prompt, try getting position
+          navigator.geolocation.getCurrentPosition(
+            (position) => {
+              setCurrentLocation({
+                lat: position.coords.latitude,
+                lng: position.coords.longitude,
+              });
+              setLocationDenied(false);
+            },
+            (error) => {
+              console.error("Error getting location:", error);
+              setLocationDenied(true);
+            }
+          );
+        }
+      });
   };
 
   return (
@@ -277,31 +309,50 @@ export default function ShopsPage() {
 
           <div className="bg-white p-4 rounded-lg shadow-md">
             <h2 className="font-semibold text-lg mb-2">Your Location</h2>
-            <p className="text-sm text-gray-500 mb-4">
-              Showing shops near:
-              <br />
-              Lat: {currentLocation.lat.toFixed(6)}
-              <br />
-              Lng: {currentLocation.lng.toFixed(6)}
-            </p>
-            <Button
-              variant="outline"
-              size="sm"
-              className="w-full"
-              onClick={() => {
-                if (navigator.geolocation) {
-                  navigator.geolocation.getCurrentPosition((position) => {
-                    setCurrentLocation({
-                      lat: position.coords.latitude,
-                      lng: position.coords.longitude,
-                    });
-                  });
-                }
-              }}
-            >
-              <MapPin className="w-4 h-4 mr-2" />
-              Reset to Current Location
-            </Button>
+            {locationDenied ? (
+              <div>
+                <p className="text-sm text-gray-500 mb-4">
+                  Location access is denied. Showing all available shops.
+                </p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full"
+                  onClick={requestLocationPermission}
+                >
+                  <MapPin className="w-4 h-4 mr-2" />
+                  Enable Location Access
+                </Button>
+              </div>
+            ) : (
+              <div>
+                <p className="text-sm text-gray-500 mb-4">
+                  Showing shops near:
+                  <br />
+                  Lat: {currentLocation.lat.toFixed(6)}
+                  <br />
+                  Lng: {currentLocation.lng.toFixed(6)}
+                </p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full"
+                  onClick={() => {
+                    if (navigator.geolocation) {
+                      navigator.geolocation.getCurrentPosition((position) => {
+                        setCurrentLocation({
+                          lat: position.coords.latitude,
+                          lng: position.coords.longitude,
+                        });
+                      });
+                    }
+                  }}
+                >
+                  <MapPin className="w-4 h-4 mr-2" />
+                  Reset to Current Location
+                </Button>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -339,6 +390,8 @@ export default function ShopsPage() {
           <p className="mt-1 text-gray-500">
             {searchTerm || selectedCategory
               ? "Try changing your search criteria or filters"
+              : locationDenied
+              ? "No shops found in our database. Try enabling location access to find shops near you."
               : "There are no shops near your current location."}
           </p>
           {(searchTerm || selectedCategory) && (
@@ -379,11 +432,13 @@ export default function ShopsPage() {
                     <Store className="h-12 w-12 text-gray-400" />
                   </div>
                 )}
-                <div className="absolute top-2 right-2 bg-white/80 backdrop-blur-sm rounded-full px-2 py-1 text-xs font-medium text-gray-800">
-                  {shop.distance < 1
-                    ? `${(shop.distance * 1000).toFixed(0)}m away`
-                    : `${shop.distance.toFixed(1)}km away`}
-                </div>
+                {!locationDenied && shop.distance !== undefined && (
+                  <div className="absolute top-2 right-2 bg-white/80 backdrop-blur-sm rounded-full px-2 py-1 text-xs font-medium text-gray-800">
+                    {shop.distance < 1
+                      ? `${(shop.distance * 1000).toFixed(0)}m away`
+                      : `${shop.distance.toFixed(1)}km away`}
+                  </div>
+                )}
               </div>
 
               <div className="p-4">

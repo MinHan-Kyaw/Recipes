@@ -257,13 +257,14 @@ export default function RatingsAndComments({
               <p className="text-sm text-gray-500">No ratings yet</p>
             )}
           </div>
-
-          <div className="flex flex-col items-start md:items-end">
-            <p className="text-sm font-medium mb-2">
-              {userRating ? "Your rating" : "Rate this recipe"}
-            </p>
-            <div className="flex">{renderStars(userRating, true)}</div>
-          </div>
+          {user && (
+            <div className="flex flex-col items-start md:items-end">
+              <p className="text-sm font-medium mb-2">
+                {userRating ? "Your rating" : "Rate this recipe"}
+              </p>
+              <div className="flex">{renderStars(userRating, true)}</div>
+            </div>
+          )}
         </div>
       </div>
 

@@ -16,7 +16,8 @@ export async function middleware(request: NextRequest) {
       path.startsWith("/recipes/") ||
       path.startsWith("/shops/") ||
       path.startsWith("/api/recipes/") ||
-      path.startsWith("/api/users/")
+      path.startsWith("/api/users/") || 
+      path.startsWith("/api/shops/")
   );
 
   if (isPublicPath) {
@@ -47,6 +48,6 @@ export async function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     // Match all paths except these
-    "/((?!_next|api/auth|auth/login|auth/signup|favicon.ico|api/recipes).*)",
+    "/((?!_next|api/auth|auth/login|auth/signup|favicon.ico|api/recipes|api/shops).*)",
   ],
 };

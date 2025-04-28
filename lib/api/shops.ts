@@ -1,6 +1,21 @@
 import { Shop } from "../types/shop";
 import { createActivityLog } from "./activitylog";
 
+// Helper to get base URL that works in both client and server components
+const getBaseUrl = () => {
+  if (process.env.NEXT_PUBLIC_API_URL) {
+    return process.env.NEXT_PUBLIC_API_URL;
+  }
+
+  // Check if window is defined (client-side)
+  if (typeof window !== "undefined") {
+    return window.location.origin;
+  }
+
+  // Server-side with no env var set
+  return "http://localhost:3000";
+};
+
 /**
  * Fetch all shops that belong to a specific user
  * @param {string} userId - The ID of the user
@@ -178,6 +193,53 @@ export async function deleteShop(shopId: string, userId: string) {
     return data.success;
   } catch (error) {
     console.error("Error deleting shop:", error);
+    throw error;
+  }
+}
+
+/**
+ * Fetch all shops
+ * @returns {Promise<Array>} - Promise resolving to an array of all shops
+ */
+export async function fetchAllShops() {
+  try {
+    const baseUrl = getBaseUrl();
+    const response = await fetch(`${baseUrl}/api/shops`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+    if (!response.ok) {
+      throw new Error("Failed to fetch all shops");
+    }
+    const data = await response.json();
+    return data.success ? data.data : [];
+  } catch (error) {
+    console.error("Error fetching all shops:", error);
+    throw error;
+  }
+}
+
+/**
+ * Fetch shops with coordinates
+ * @param {number} lat - Latitude
+ * @param {number} lng - Longitude
+ */
+export async function fetchShopsWithCoordinates(lat: number, lng: number) {
+  try {
+    const response = await fetch(
+      `/api/shops/coordinates?lat=${lat}&lng=${lng}`
+    );
+
+    if (!response.ok) {
+      throw new Error("Failed to fetch shops with coordinates");
+    }
+
+    const data = await response.json();
+    return data.success ? data.data : [];
+  } catch (error) {
+    console.error("Error fetching shops with coordinates:", error);
     throw error;
   }
 }

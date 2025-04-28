@@ -5,8 +5,12 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Recipe } from "@/lib/types/recipe";
 import RatingsAndComments from "./RatingsAndComments";
+import { useAuth } from "@/components/AuthProvider";
+import FavoriteButton from "../FavoriteButton";
 
 export default function MealDetails({ meal }: { meal: Recipe }) {
+  const { user } = useAuth();
+
   if (!meal) {
     return <div>Meal not found</div>;
   }
@@ -38,6 +42,13 @@ export default function MealDetails({ meal }: { meal: Recipe }) {
       {/* Hero Section */}
       <header className="relative overflow-hidden bg-white">
         <div className="container mx-auto px-4 py-8 md:py-16">
+          <div className="hidden md:block">
+            {user && meal._id && (
+              <div className="absolute top-4 right-4 z-10">
+                <FavoriteButton recipeId={meal._id} size="medium" />
+              </div>
+            )}
+          </div>
           <div className="flex flex-col md:flex-row gap-8 md:gap-16 items-center">
             {/* Image with animation */}
             <motion.div
@@ -73,6 +84,14 @@ export default function MealDetails({ meal }: { meal: Recipe }) {
               <p className="text-xl text-gray-700">{meal.description}</p>
             </motion.div>
           </div>
+        </div>
+        {/* Add floating favorite button for mobile */}
+        <div className="md:hidden">
+          {user && meal._id && (
+            <div className="fixed bottom-6 right-6 z-30">
+              <FavoriteButton recipeId={meal._id} size="large" />
+            </div>
+          )}
         </div>
       </header>
 
