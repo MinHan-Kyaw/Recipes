@@ -88,6 +88,7 @@ export const VideoLink: React.FC<VideoLinkProps> = ({
             )}
             {videoUrl && isValid && (
               <Button
+                type="button"
                 variant="ghost"
                 size="icon"
                 className="h-6 w-6 ml-1"

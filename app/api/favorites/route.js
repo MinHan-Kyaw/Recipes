@@ -103,11 +103,10 @@ export async function GET(request) {
         },
       })
       .sort({ addedAt: -1 });
-    // Extract recipe data and add any other necessary fields
+
     const recipes = favorites.map((favorite) => {
       const recipe = favorite.recipe.toObject();
 
-      // Format the recipe object as needed
       return {
         ...recipe,
         authorDetails: recipe.author,

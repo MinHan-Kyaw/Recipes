@@ -57,16 +57,16 @@ import { AnimatedButton } from "../AnimatedButton";
 const BulkAddDialog: React.FC<{
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (ingredients: string[]) => void;
+  onSubmit: (ingredients: string[], e: React.MouseEvent) => void;
 }> = ({ isOpen, onClose, onSubmit }) => {
   const [bulkIngredients, setBulkIngredients] = useState("");
 
-  const handleSubmit = () => {
+  const handleSubmit = (e: React.MouseEvent) => {
     const newIngredients = bulkIngredients
       .split("\n")
       .map((ingredient) => ingredient.trim())
       .filter((ingredient) => ingredient !== "");
-    onSubmit(newIngredients);
+    onSubmit(newIngredients, e);
     setBulkIngredients("");
   };
 
@@ -120,8 +120,8 @@ const IngredientItem: React.FC<{
   ingredient: string;
   index: number;
   isReorderMode: boolean;
-  onUpdate: (index: number, value: string) => void;
-  onRemove: (index: number) => void;
+  onUpdate: (index: number, value: string, e: React.MouseEvent) => void;
+  onRemove: (index: number, e: React.MouseEvent) => void;
   dragHandleProps: any;
 }> = ({
   ingredient,
@@ -161,13 +161,16 @@ const IngredientItem: React.FC<{
         <Input
           type="text"
           value={ingredient}
-          onChange={(e) => onUpdate(index, e.target.value)}
+          onChange={(e) =>
+            onUpdate(index, e.target.value, e as unknown as React.MouseEvent)
+          }
           placeholder="e.g. 2 cups flour, sifted"
           className="flex-1 border-none bg-transparent text-sm p-0 text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-0"
         />
       )}
       <motion.button
-        onClick={() => onRemove(index)}
+        type="button"
+        onClick={(e) => onRemove(index, e as React.MouseEvent)}
         className="flex items-center justify-center bg-transparent border-none p-1 text-gray-400 cursor-pointer rounded-full hover:text-primary hover:bg-primary/10"
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.9 }}
@@ -194,22 +197,38 @@ export const IngredientList: React.FC<IngredientListProps> = ({
   const dragOverItem = useRef<number | null>(null);
   const listRef = useRef<HTMLDivElement>(null);
 
-  const handleAddIngredient = () => {
+  const handleAddIngredient = (e: React.MouseEvent) => {
+    e.preventDefault();
     setIngredients([...ingredients, ""]);
   };
-
-  const handleRemoveIngredient = (index: number) => {
+  const handleRemoveIngredient = (index: number, e: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation(); // Stop event bubbling
+    }
     const newIngredients = ingredients.filter((_, i) => i !== index);
     setIngredients(newIngredients);
   };
 
-  const handleUpdateIngredient = (index: number, value: string) => {
+  const handleUpdateIngredient = (
+    index: number,
+    value: string,
+    e: React.MouseEvent
+  ) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation(); // Stop event bubbling
+    }
     const newIngredients = [...ingredients];
     newIngredients[index] = value;
     setIngredients(newIngredients);
   };
 
-  const handleBulkAdd = (newIngredients: string[]) => {
+  const handleBulkAdd = (newIngredients: string[], e: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation(); // Stop event bubbling
+    }
     setIngredients([...ingredients, ...newIngredients]);
     setIsDialogOpen(false);
   };
@@ -272,10 +291,10 @@ export const IngredientList: React.FC<IngredientListProps> = ({
     dragOverItem.current = null;
   };
 
-  const toggleReorderMode = () => {
+  const toggleReorderMode = (e: React.MouseEvent) => {
+    e.preventDefault();
     setIsReorderMode(!isReorderMode);
   };
-
   return (
     <motion.div
       className="w-full flex flex-col gap-4"
@@ -294,7 +313,10 @@ export const IngredientList: React.FC<IngredientListProps> = ({
           Enter ingredients below or{" "}
           <motion.button
             className="bg-transparent border-none p-0 text-primary underline cursor-pointer text-inherit"
-            onClick={() => setIsDialogOpen(true)}
+            onClick={(e) => {
+              e.preventDefault();
+              setIsDialogOpen(true);
+            }}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >
@@ -385,7 +407,10 @@ export const IngredientList: React.FC<IngredientListProps> = ({
       {/* Add ingredient button (visible only when not in reorder mode) */}
       {!isReorderMode && (
         <AnimatedButton
-          onClick={handleAddIngredient}
+          onClick={(e) => {
+            e.preventDefault();
+            handleAddIngredient(e);
+          }}
           className="text-sm bg-white hover:bg-primary/5 text-primary border-primary hover:text-primary"
           icon={<Plus size={16} />}
         >

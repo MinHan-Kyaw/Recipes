@@ -2,7 +2,7 @@ import { Button } from "./ui/button";
 import { AnimatePresence, motion } from "framer-motion";
 
 export const AnimatedButton: React.FC<{
-  onClick: () => void;
+  onClick: (e: React.MouseEvent) => void;
   className?: string;
   icon?: React.ReactNode;
   children: React.ReactNode;
@@ -22,6 +22,11 @@ export const AnimatedButton: React.FC<{
   isPrimary = false,
   variant = "outline",
 }) => {
+  const handleClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (onClick) onClick(e);
+  };
   return (
     <AnimatePresence>
       <motion.div
@@ -36,7 +41,8 @@ export const AnimatedButton: React.FC<{
           transition={{ duration: 0.2 }}
         >
           <Button
-            onClick={onClick}
+            type="button"
+            onClick={handleClick}
             className={`gap-2 ${className}`}
             variant={isPrimary ? "default" : variant}
           >

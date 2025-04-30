@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { X, ChefHat, Pencil, Clock, Users, Book, Loader2 } from "lucide-react";
 import { IngredientList } from "@/components/recipes/IngredientList";
 import DirectionList from "@/components/recipes/DirectionList";

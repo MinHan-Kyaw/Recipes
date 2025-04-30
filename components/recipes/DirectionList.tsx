@@ -12,11 +12,20 @@ const DirectionList: React.FC<DirectionListProps> = ({
   directions,
   setDirections,
 }) => {
-  const addDirection = () => {
+  const addDirection = (e: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation(); // Stop event bubbling
+    }
     setDirections([...directions, ""]);
   };
 
-  const removeDirection = (index: number) => {
+  const removeDirection = (index: number, e: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation(); // Stop event bubbling
+    }
+    console.log("Removing direction at index:", index);
     const newDirections = directions.filter((_, i) => i !== index);
     setDirections(newDirections);
   };
@@ -41,7 +50,10 @@ const DirectionList: React.FC<DirectionListProps> = ({
             type="button"
             variant="ghost"
             size="icon"
-            onClick={() => removeDirection(index)}
+            onClick={(e) => {
+              e.preventDefault();
+              removeDirection(index,e);
+            }}
             className="absolute right-2 top-2 h-6 w-6 text-slate-400 hover:text-red-500 hover:bg-transparent"
           >
             <X className="h-4 w-4" />
@@ -49,8 +61,10 @@ const DirectionList: React.FC<DirectionListProps> = ({
         </div>
       ))}
       <AnimatedButton
-        onClick={addDirection}
-        className="text-sm bg-white hover:bg-primary/5 text-primary border-primary hover:text-primary"
+        onClick={(e) => {
+          e.preventDefault();
+          addDirection(e);
+        }}
         icon={<Plus size={16} />}
       >
         Add Step
