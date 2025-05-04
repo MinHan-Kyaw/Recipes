@@ -9,10 +9,14 @@ export async function GET(request) {
     await dbConnect();
     const { searchParams } = new URL(request.url);
     const shopId = searchParams.get("shop");
+    const searchQuery = searchParams.get("search");
     const limit = parseInt(searchParams.get("limit")) || null;
     const query = {};
     if (shopId) {
       query.shop = shopId;
+    }
+    if (searchQuery) {
+      query.title = { $regex: searchQuery, $options: "i" }; // Case-insensitive search
     }
     query.isPublic = true;
     let recipeQuery = Recipe.find(query)

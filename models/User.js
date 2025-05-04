@@ -37,6 +37,12 @@ const UserSchema = new mongoose.Schema({
       ref: "Shop",
     },
   ],
+  resetToken: {
+    type: String,
+  },
+  resetTokenExpiry: {
+    type: Date,
+  },
   createdAt: {
     type: Date,
     default: Date.now,

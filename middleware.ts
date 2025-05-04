@@ -3,7 +3,7 @@ import type { NextRequest } from "next/server";
 import { jwtVerify } from "jose";
 
 // List of paths that don't require authentication
-const publicPaths = ["/", "/auth/login", "/auth/signup", "/recipes", "/shops"];
+const publicPaths = ["/", "/auth/login", "/auth/signup","/auth/forgotpassword", "/recipes", "/shops"];
 
 export async function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
@@ -48,6 +48,6 @@ export async function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     // Match all paths except these
-    "/((?!_next|api/auth|auth/login|auth/signup|favicon.ico|api/recipes|api/shops).*)",
+    "/((?!_next|api/auth|auth/login|auth/signup|auth/forgotpassword|favicon.ico|api/recipes|api/shops).*)",
   ],
 };

@@ -52,10 +52,13 @@ export async function createRecipe(recipeData: Recipe, userId: string) {
 }
 
 // Get all recipes
-export async function getAllRecipes() {
+export async function getAllRecipes(searchQuery?: string) {
   try {
     const baseUrl = getBaseUrl();
-    const response = await fetch(`${baseUrl}/api/recipes`, {
+    const queryString = searchQuery
+      ? `?search=${encodeURIComponent(searchQuery)}`
+      : "";
+    const response = await fetch(`${baseUrl}/api/recipes${queryString}`, {
       // For server components
       cache: "no-store",
     });

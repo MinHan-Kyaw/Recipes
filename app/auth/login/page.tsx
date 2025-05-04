@@ -124,7 +124,7 @@ export default function Login() {
               <div className="flex items-center justify-between">
                 <Label htmlFor="password">Password</Label>
                 <Link
-                  href="#"
+                  href="/auth/forgotpassword"
                   className="text-sm font-medium text-primary hover:underline"
                 >
                   Forgot password?
@@ -171,25 +171,7 @@ export default function Login() {
             </Link>
           </div>
 
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <Separator />
-            </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-background px-2 text-muted-foreground">
-                Or continue with
-              </span>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <Button variant="outline" className="w-full">
-              Google
-            </Button>
-            <Button variant="outline" className="w-full">
-              Facebook
-            </Button>
-          </div>
+          
         </CardContent>
 
         <CardFooter className="flex justify-center">

@@ -1,7 +1,11 @@
-import { Suspense } from "react";
+"use client";
+
+import { Suspense, useState } from "react";
 import { Recipe } from "@/lib/types/recipe";
 import RecipeItem from "@/components/meals/RecipeItem";
 import RecipeLoadingSkeleton from "@/components/meals/RecipeLoadingSkeleton";
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
+import SearchBar from "@/components/recipes/SearchBar";
 import { getAllRecipes } from "@/lib/api/recipes";
 
 // RecipesGrid functionality directly in the page
@@ -36,7 +40,7 @@ function RecipesGrid({
           </li>
         ))
       ) : (
-        <li className="col-span-full text-center py-8">
+        <li className="col-span-full text-center text-gray-500 text-lg">
           No recipes found. Be the first to add one!
         </li>
       )}
@@ -44,26 +48,70 @@ function RecipesGrid({
   );
 }
 
-// Async component to fetch recipes
-async function Recipes() {
-  const recipes = await getAllRecipes();
-  return <RecipesGrid meals={recipes} />;
+// Client component for handling search functionality
+export default function RecipesPageClient() {
+  const [recipes, setRecipes] = useState<Recipe[]>([]);
+  const [loading, setLoading] = useState(true);
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+
+  // Function to fetch recipes with optional search query
+  const fetchRecipes = async (searchQuery?: string) => {
+    setLoading(true);
+    try {
+      const data = await getAllRecipes(searchQuery);
+      if (data) {
+        setRecipes(data);
+      }
+    } catch (error) {
+      console.error("Error fetching recipes:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Handle search submission
+  const handleSearch = (query: string) => {
+    // Update URL with search query
+    const params = new URLSearchParams(searchParams);
+    if (query) {
+      params.set("search", query);
+    } else {
+      params.delete("search");
+    }
+
+    router.push(`${pathname}?${params.toString()}`);
+    fetchRecipes(query);
+  };
+
+  // Initial fetch on component mount
+  useState(() => {
+    const currentSearch = searchParams.get("search") || "";
+    fetchRecipes(currentSearch);
+  });
+
+  return (
+    <div className="container mx-auto py-8">
+      <h1 className="text-3xl font-bold text-center mb-8">All Recipes</h1>
+
+      {/* Search bar component */}
+      <SearchBar
+        onSearch={handleSearch}
+        placeholder="Search recipes by title..."
+      />
+
+      <RecipesGrid meals={recipes} loading={loading} />
+    </div>
+  );
 }
 
-export default function RecipesPage() {
+// Export for server component page
+export function RecipesPage() {
   return (
-    <main className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
-      <h1 className="text-3xl font-bold text-center mb-6">All Recipes</h1>
-      <Suspense
-        fallback={
-          <div className="text-center">
-            <RecipesGrid loading={true} meals={[]} />
-          </div>
-        }
-      >
-        <Recipes />
-      </Suspense>
-    </main>
+    <Suspense fallback={<RecipesGrid meals={[]} loading={true} />}>
+      <RecipesPageClient />
+    </Suspense>
   );
 }
 
