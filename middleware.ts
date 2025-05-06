@@ -24,6 +24,10 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
+   if (path.startsWith("/admin")) {
+    return NextResponse.next();
+  }
+
   // Check for auth token
   const token = request.cookies.get("token")?.value;
 

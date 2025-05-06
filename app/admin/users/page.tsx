@@ -1,14 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import {
-  Users,
-  Plus,
-  Store,
-  UserX,
-  ShieldCheck,
-  ChevronLeft,
-} from "lucide-react";
+import { Users, Plus, Store, UserX, ShieldCheck } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -20,7 +13,6 @@ import {
   updateUser,
 } from "@/lib/api/admin/users";
 import { User } from "@/lib/types/user";
-import Link from "next/link";
 import UserStatsCards from "@/components/admin/users/UserStatsCards";
 import UserFilters from "@/components/admin/users/UserFilters";
 import UserTable from "@/components/admin/users/UserTable";
@@ -30,11 +22,14 @@ import { UnverifiedUsersTabContent } from "@/components/admin/users/UserTabConte
 import UserDetailsDialog from "@/components/admin/users/UserDetailsDialog";
 import { useRouter, useSearchParams } from "next/navigation";
 import Sidebar from "@/components/admin/SideBar";
+import Cookies from "js-cookie";
 
 export default function UsersPage() {
   const { toast } = useToast();
   const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isAuthorized, setIsAuthorized] = useState(false);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterType, setFilterType] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
@@ -58,18 +53,6 @@ export default function UsersPage() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState("all-users");
 
-  useEffect(() => {
-    const filter = searchParams.get("filter");
-    if (filter === "unverified") {
-      setFilterStatus("unverified");
-      setFilterType("unverified");
-      setActiveTab("unverified");
-      // Remove the parameter from the URL
-      const newUrl = window.location.pathname;
-      router.replace(newUrl);
-    }
-  }, [searchParams, router]);
-
   // Form errors state
   const [errors, setErrors] = useState({
     name: "",
@@ -79,8 +62,65 @@ export default function UsersPage() {
 
   const itemsPerPage = 5;
 
-  // Fetch users on component mount
+  // First check admin status before doing anything else
   useEffect(() => {
+    const checkAdminStatus = async () => {
+      setIsCheckingAuth(true);
+      try {
+        const token = Cookies.get("token");
+        if (!token || token === "undefined") {
+          router.push("/auth/login");
+          return;
+        }
+
+        const response = await fetch("/api/auth/me");
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success) {
+            if (data.data.type === "admin") {
+              setIsAuthorized(true);
+            } else {
+              router.push("/");
+            }
+          } else {
+            router.push("/auth/login");
+          }
+        } else {
+          if (response.status === 401) {
+            Cookies.remove("token");
+            router.push("/auth/login");
+          }
+        }
+      } catch (error) {
+        console.error("Error checking admin status:", error);
+        router.push("/auth/login");
+      } finally {
+        setIsCheckingAuth(false);
+      }
+    };
+
+    checkAdminStatus();
+  }, [router]);
+
+  // Check URL parameters once admin status is confirmed
+  useEffect(() => {
+    if (!isAuthorized || isCheckingAuth) return;
+
+    const filter = searchParams.get("filter");
+    if (filter === "unverified") {
+      setFilterStatus("unverified");
+      setFilterType("unverified");
+      setActiveTab("unverified");
+      // Remove the parameter from the URL
+      const newUrl = window.location.pathname;
+      router.replace(newUrl);
+    }
+  }, [searchParams, router, isAuthorized, isCheckingAuth]);
+
+  // Only fetch users after admin status is confirmed
+  useEffect(() => {
+    if (!isAuthorized || isCheckingAuth) return;
+
     const loadUsers = async () => {
       try {
         setIsLoading(true);
@@ -99,7 +139,7 @@ export default function UsersPage() {
     };
 
     loadUsers();
-  }, [toast]);
+  }, [toast, isAuthorized, isCheckingAuth]);
 
   // Update form data when editing a user
   useEffect(() => {
@@ -373,6 +413,23 @@ export default function UsersPage() {
     setDialogMode("add");
     setIsDialogOpen(true);
   };
+
+  // Show loading state while checking authorization
+  if (isCheckingAuth) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-gray-300 border-t-blue-600 rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-lg text-gray-600">Checking authorization...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Only render the main content if user is authorized
+  if (!isAuthorized) {
+    return null; // Will redirect via useEffect
+  }
 
   return (
     <div className="flex">

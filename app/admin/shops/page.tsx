@@ -79,8 +79,50 @@ export default function ShopsPage() {
   const [userId, setUserId] = useState<string | null>(null);
   const searchParams = useSearchParams();
   const router = useRouter();
+  const [isAuthorized, setIsAuthorized] = useState(false);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
 
   useEffect(() => {
+    const checkAdminStatus = async () => {
+      setIsCheckingAuth(true);
+      try {
+        const token = Cookies.get("token");
+        if (!token || token === "undefined") {
+          router.push("/auth/login");
+          return;
+        }
+
+        const response = await fetch("/api/auth/me");
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success) {
+            if (data.data.type === "admin") {
+              setIsAuthorized(true);
+            } else {
+              router.push("/");
+            }
+          } else {
+            router.push("/auth/login");
+          }
+        } else {
+          if (response.status === 401) {
+            Cookies.remove("token");
+            router.push("/auth/login");
+          }
+        }
+      } catch (error) {
+        console.error("Error checking admin status:", error);
+        router.push("/auth/login");
+      } finally {
+        setIsCheckingAuth(false);
+      }
+    };
+
+    checkAdminStatus();
+  }, [router]);
+
+  useEffect(() => {
+    if (!isAuthorized || isCheckingAuth) return;
     const filter = searchParams.get("filter");
     if (filter === "pending") {
       setCurrentTab("pending");
@@ -89,7 +131,7 @@ export default function ShopsPage() {
       const newUrl = window.location.pathname;
       router.replace(newUrl);
     }
-  }, [searchParams, router]);
+  }, [searchParams, router, isAuthorized, isCheckingAuth]);
 
   interface FormData {
     shopName: string;
@@ -138,6 +180,7 @@ export default function ShopsPage() {
 
   // Fetch shops on component mount
   useEffect(() => {
+    if (!isAuthorized || isCheckingAuth) return;
     const loadShops = async () => {
       try {
         setIsLoading(true);
@@ -175,7 +218,7 @@ export default function ShopsPage() {
     };
 
     loadShops();
-  }, [toast, shops.length]);
+  }, [toast, shops.length, isAuthorized, isCheckingAuth]);
 
   // Update form data when editing a shop
   useEffect(() => {
@@ -199,6 +242,7 @@ export default function ShopsPage() {
 
   // Update current tab based on filter changes
   useEffect(() => {
+    if (!isAuthorized || isCheckingAuth) return;
     if (filterApproval === "approved") {
       setCurrentTab("approved");
     } else if (filterApproval === "pending") {
@@ -208,7 +252,7 @@ export default function ShopsPage() {
     } else {
       setCurrentTab("all-shops");
     }
-  }, [filterApproval, filterHasRecipes]);
+  }, [filterApproval, filterHasRecipes, isAuthorized, isCheckingAuth]);
 
   // Handle form input changes
   const handleInputChange = (
@@ -544,15 +588,22 @@ export default function ShopsPage() {
     (shop) => (shop.recipesCount ?? 0) > 0
   ).length;
 
-  // Get shop logo initials
-  const getShopInitials = (name: string) => {
-    if (!name) return "";
-    return name
-      .split(" ")
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase();
-  };
+  // Show loading state while checking authorization
+  if (isCheckingAuth) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-gray-300 border-t-blue-600 rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-lg text-gray-600">Checking authorization...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Only render the main content if user is authorized
+  if (!isAuthorized) {
+    return null; // Will redirect via useEffect
+  }
 
   return (
     <div className="flex">

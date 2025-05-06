@@ -32,6 +32,7 @@ import { fetchAllRecipeAdmin } from "@/lib/api/admin/recipes";
 import { RecentTabContent } from "@/components/admin/recipes/RecentTabContent";
 import Cookies from "js-cookie";
 import Sidebar from "@/components/admin/SideBar";
+import { useRouter } from "next/navigation";
 
 export default function RecipesPage() {
   const { toast } = useToast();
@@ -78,6 +79,9 @@ export default function RecipesPage() {
   });
   const [sortBy, setSortBy] = useState("newest");
   const [userId, setUserId] = useState<string | null>(null);
+  const router = useRouter();
+  const [isAuthorized, setIsAuthorized] = useState(false);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
 
   const itemsPerPage = 5;
 
@@ -110,8 +114,48 @@ export default function RecipesPage() {
     }
   };
 
+  useEffect(() => {
+    const checkAdminStatus = async () => {
+      setIsCheckingAuth(true);
+      try {
+        const token = Cookies.get("token");
+        if (!token || token === "undefined") {
+          router.push("/auth/login");
+          return;
+        }
+
+        const response = await fetch("/api/auth/me");
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success) {
+            if (data.data.type === "admin") {
+              setIsAuthorized(true);
+            } else {
+              router.push("/");
+            }
+          } else {
+            router.push("/auth/login");
+          }
+        } else {
+          if (response.status === 401) {
+            Cookies.remove("token");
+            router.push("/auth/login");
+          }
+        }
+      } catch (error) {
+        console.error("Error checking admin status:", error);
+        router.push("/auth/login");
+      } finally {
+        setIsCheckingAuth(false);
+      }
+    };
+
+    checkAdminStatus();
+  }, [router]);
+
   // Fetch recipes on component mount
   useEffect(() => {
+    if (!isAuthorized || isCheckingAuth) return;
     const loadRecipes = async () => {
       try {
         setIsLoading(true);
@@ -138,7 +182,7 @@ export default function RecipesPage() {
     };
 
     loadRecipes();
-  }, [toast]);
+  }, [toast, isAuthorized, isCheckingAuth]);
 
   // Update form data when editing a recipe
   useEffect(() => {
@@ -397,36 +441,6 @@ export default function RecipesPage() {
 
   const sortedAndFilteredRecipes = sortRecipes(filteredRecipes);
 
-  const sortedRecipes = [...filteredRecipes].sort((a, b) => {
-    let fieldA = a[sortField as keyof Recipe];
-    let fieldB = b[sortField as keyof Recipe];
-
-    // Convert arrays and objects to strings for comparison
-    if (Array.isArray(fieldA)) fieldA = fieldA.join(",");
-    if (Array.isArray(fieldB)) fieldB = fieldB.join(",");
-    if (typeof fieldA === "object" && fieldA !== null)
-      fieldA = JSON.stringify(fieldA);
-    if (typeof fieldB === "object" && fieldB !== null)
-      fieldB = JSON.stringify(fieldB);
-    if (fieldA === null) fieldA = "";
-    if (fieldB === null) fieldB = "";
-
-    // Handle special cases for sorting
-    if (sortField === "createdAt" || sortField === "updatedAt") {
-      fieldA = fieldA ? new Date(fieldA as string).getTime() : 0;
-      fieldB = fieldB ? new Date(fieldB as string).getTime() : 0;
-    }
-
-    if (fieldA === undefined) fieldA = "";
-    if (fieldB === undefined) fieldB = "";
-
-    const sortOrder = sortDirection === "asc" ? 1 : -1;
-
-    if (fieldA < fieldB) return -1 * sortOrder;
-    if (fieldA > fieldB) return 1 * sortOrder;
-    return 0;
-  });
-
   // Pagination
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
@@ -500,6 +514,23 @@ export default function RecipesPage() {
       )
     ),
   ];
+
+  // Show loading state while checking authorization
+  if (isCheckingAuth) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-gray-300 border-t-blue-600 rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-lg text-gray-600">Checking authorization...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Only render the main content if user is authorized
+  if (!isAuthorized) {
+    return null; // Will redirect via useEffect
+  }
 
   return (
     <div className="flex">

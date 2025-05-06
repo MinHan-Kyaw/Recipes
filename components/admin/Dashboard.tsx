@@ -1,15 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { use, useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import {
   Users,
   Store,
   UtensilsCrossed,
   Search,
-  LogOut,
-  Settings,
-  LineChart,
   UserCheck,
   MapPinCheck,
 } from "lucide-react";
@@ -25,9 +22,9 @@ import { fetchShopsCount } from "@/lib/api/admin/shops";
 import { fetchRecipeCounts } from "@/lib/api/admin/recipes";
 import { useRouter } from "next/navigation";
 import Sidebar from "./SideBar";
+import Cookies from "js-cookie";
 
 export default function AdminDashboard() {
-  const { user, loading, logout } = useAuth();
   const [stats, setStats] = useState({
     totalUsers: 0,
     pendingApprovals: 0,
@@ -36,9 +33,51 @@ export default function AdminDashboard() {
     totalRecipes: 0,
     newRecipesToday: 0,
   });
+  const [isAuthorized, setIsAuthorized] = useState(false);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
+    const checkAdminStatus = async () => {
+      setIsCheckingAuth(true);
+      try {
+        const token = Cookies.get("token");
+        if (!token || token === "undefined") {
+          router.push("/auth/login");
+          return;
+        }
+
+        const response = await fetch("/api/auth/me");
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success) {
+            if (data.data.type === "admin") {
+              setIsAuthorized(true);
+            } else {
+              router.push("/");
+            }
+          } else {
+            router.push("/auth/login");
+          }
+        } else {
+          if (response.status === 401) {
+            Cookies.remove("token");
+            router.push("/auth/login");
+          }
+        }
+      } catch (error) {
+        console.error("Error checking admin status:", error);
+        router.push("/auth/login");
+      } finally {
+        setIsCheckingAuth(false);
+      }
+    };
+
+    checkAdminStatus();
+  }, [router]);
+
+  useEffect(() => {
+    if (!isAuthorized || isCheckingAuth) return;
     const getUserCount = async () => {
       try {
         const response = await fetchUsersCount();
@@ -81,12 +120,24 @@ export default function AdminDashboard() {
     getRecipeCount();
     getShopCount();
     getUserCount();
-  }, []);
+  }, [isAuthorized, isCheckingAuth]);
 
-  // Get first letter of user's name for the avatar
-  const getInitial = (name: string) => {
-    return name ? name.charAt(0).toUpperCase() : "";
-  };
+  // Show loading state while checking authorization
+  if (isCheckingAuth) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-gray-300 border-t-blue-600 rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-lg text-gray-600">Checking authorization...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Only render the main content if user is authorized
+  if (!isAuthorized) {
+    return null; // Will redirect via useEffect
+  }
 
   return (
     <div className="flex h-screen bg-gray-100">

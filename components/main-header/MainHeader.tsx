@@ -294,7 +294,7 @@ export default function MainHeader() {
                     size="sm"
                     className="rounded-full"
                   >
-                    <Link href="/auth/register">Sign Up</Link>
+                    <Link href="/auth/signup">Sign Up</Link>
                   </Button>
                   <Button
                     asChild

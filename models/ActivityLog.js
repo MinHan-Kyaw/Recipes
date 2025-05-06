@@ -50,19 +50,14 @@ const ActivityLogSchema = new mongoose.Schema({
 
   detail: {
     type: String,
-    required: [true, "Details are required"],
+    required: [true, "Detail is required"],
   },
 
   // Timestamp of when the action occurred
   timestamp: {
     type: Date,
     default: Date.now,
-  },
-
-  // IP address of the user (optional)
-  ipAddress: {
-    type: String,
-  },
+  }
 });
 
 // Add indexes for common queries

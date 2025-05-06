@@ -14,8 +14,7 @@ export async function POST(request) {
       entityType,
       entityId,
       entityName,
-      details,
-      ipAddress,
+      detail
     } = body;
 
     // Validate required fields
@@ -34,8 +33,7 @@ export async function POST(request) {
       entityType,
       entityId,
       entityName,
-      details,
-      ipAddress,
+      detail
     });
 
     return NextResponse.json(

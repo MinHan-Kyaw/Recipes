@@ -16,16 +16,17 @@ export async function signupUser(userData: User) {
     if (!response) {
       throw new Error(data.error || "Failed to sign up");
     }
-    if (response.status === 200) {
-      await createActivityLog({
-        user: data.data._id,
-        userName: userData.name,
-        actionType: "register",
-        detail: `New user registration`,
-        entityType: "user",
-        entityName: userData.name + " registered",
-        entityId: data.data._id,
-      });
+    console.log("Signup response:", data);
+    if (data.success) {
+      await createActivityLog(
+        data.data._id,
+        userData.name,
+        "register",
+        "New user registration",
+        "user",
+        userData.name + " registered",
+        data.data._id
+      );
     }
 
     return data;
