@@ -6,6 +6,7 @@ export async function GET(request, { params }) {
   try {
     await dbConnect();
     const { coords } = params;
+    console.log("Coordinates received:", coords);
     const [lat, lng] = coords;
 
     // Parse the parameters to floats
@@ -19,11 +20,11 @@ export async function GET(request, { params }) {
         { status: 400 }
       );
     }
-
+    console.log("Coordinates received:", latitude, longitude);
 
     // const allShops = await Shop.find({ isApproved: true });
     const allShops = await Shop.find();
-
+    console.log("All shops fetched:", allShops.length);
     // Calculate distance for each shop (using Haversine formula)
     const shopsWithDistance = allShops.map((shop) => {
       // Calculate distance in kilometers
@@ -49,9 +50,9 @@ export async function GET(request, { params }) {
     shopsWithDistance.sort((a, b) => a.distance - b.distance);
 
     // Return shops within 20km by default
-    const nearbyShops = shopsWithDistance.filter((shop) => shop.distance <= 20);
+    const nearbyShops = shopsWithDistance.filter((shop) => shop.distance <= 30);
 
-    return NextResponse.json({ shops: nearbyShops });
+    return NextResponse.json({ success: true, data: nearbyShops });
   } catch (error) {
     console.error("Error fetching shops:", error);
     return NextResponse.json(

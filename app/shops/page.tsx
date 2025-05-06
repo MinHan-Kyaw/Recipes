@@ -104,7 +104,6 @@ export default function ShopsPage() {
         (currentLocation.lat === 0 && currentLocation.lng === 0)
       ) {
         data = await fetchAllShops();
-        console.log("Fetched all shops UI:", data);
       } else {
         data = await fetchShopsWithCoordinates(
           currentLocation.lat,

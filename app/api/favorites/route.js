@@ -81,7 +81,16 @@ export async function GET(request) {
 
     const { searchParams } = new URL(request.url);
     const user = searchParams.get("user");
+    const recipe = searchParams.get("recipe");
+    const query = {};
 
+    // Filter by owner if provided
+    if (user) {
+      query.user = user;
+    }
+    if (recipe) {
+      query.recipe = recipe;
+    }
     if (!user) {
       return NextResponse.json(
         { error: "User ID is required" },
@@ -92,7 +101,7 @@ export async function GET(request) {
     await dbConnect();
 
     // Find all favorites for the user and populate recipe details
-    const favorites = await Favorite.find({ user })
+    const favorites = await Favorite.find(query)
       .populate({
         path: "recipe",
         model: Recipe,

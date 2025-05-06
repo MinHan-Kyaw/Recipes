@@ -224,13 +224,11 @@ export async function fetchAllShops() {
 /**
  * Fetch shops with coordinates
  * @param {number} lat - Latitude
- * @param {number} lng - Longitude
+ * @param {number} lng - LongitudeFetched all shops UI
  */
 export async function fetchShopsWithCoordinates(lat: number, lng: number) {
   try {
-    const response = await fetch(
-      `/api/shops/coordinates?lat=${lat}&lng=${lng}`
-    );
+    const response = await fetch(`/api/shops/coordinates/${lat}/${lng}`);
 
     if (!response.ok) {
       throw new Error("Failed to fetch shops with coordinates");

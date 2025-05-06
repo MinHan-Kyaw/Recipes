@@ -7,6 +7,7 @@ export default async function MealPage({
 }: {
   params: { mealSlug: string };
 }) {
+  console.log("Meal slug:", params.mealSlug);
   const recipe = await fetchRecipeById(params.mealSlug);
 
   if (!recipe) {
