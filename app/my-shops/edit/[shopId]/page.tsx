@@ -13,6 +13,8 @@ import { Shop } from "@/lib/types/shop";
 import CountrySelector from "@/components/CountrySelector";
 import { Loader } from "lucide-react";
 import MapSelector from "@/components/MapSelector";
+import { fetchShopById, updateShop } from "@/lib/api/shops";
+import Cookies from "js-cookie";
 
 export default function EditShop({ params }: { params: { shopId: string } }) {
   const router = useRouter();
@@ -63,15 +65,10 @@ export default function EditShop({ params }: { params: { shopId: string } }) {
   useEffect(() => {
     const fetchShopData = async () => {
       try {
-        const response = await fetch(`/api/shops/${shopId}`);
-        const result = await response.json();
+        const result = await fetchShopById(shopId);
 
-        if (!response.ok) {
-          throw new Error(result.error || "Failed to fetch shop data");
-        }
-
-        if (result.success && result.data) {
-          const shopData = result.data;
+        if (result) {
+          const shopData = result;
           setFormData({
             ...shopData,
             // Ensure location has default values if not present
@@ -232,18 +229,14 @@ export default function EditShop({ params }: { params: { shopId: string } }) {
         ...formData,
         logo: logoData,
       };
+      const token = Cookies.get("token");
+      const userId = token
+        ? JSON.parse(atob(token.split(".")[1])).userId
+        : null;
 
-      const response = await fetch(`/api/shops/${shopId}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(finalFormData),
-      });
+      const result = await updateShop(shopId as string, finalFormData, userId);
 
-      const result = await response.json();
-
-      if (!response.ok) {
+      if (!result) {
         throw new Error(result.error || "Failed to update shop");
       }
 

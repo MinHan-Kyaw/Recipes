@@ -9,7 +9,6 @@ import {
   Map,
   ThumbsUp,
   ThumbsDown,
-  ChevronLeft,
   FileText,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -28,9 +27,13 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { Textarea } from "@/components/ui/textarea";
-import Link from "next/link";
 import { Shop } from "@/lib/types/shop";
-import { fetchShops } from "@/lib/api/admin/shops";
+import {
+  approveShop,
+  deleteShop,
+  fetchShops,
+  updateShop,
+} from "@/lib/api/admin/shops";
 import { fetchRecipeCountsWithShop } from "@/lib/api/admin/recipes";
 import StatsCard from "@/components/admin/StatsCard";
 import ShopSearchFilters from "@/components/admin/shops/ShopSearchFilters";
@@ -39,27 +42,6 @@ import ShopTable from "@/components/admin/shops/ShopTable";
 import { useRouter, useSearchParams } from "next/navigation";
 import Cookies from "js-cookie";
 import Sidebar from "@/components/admin/SideBar";
-
-// Function to approve shop
-const approveShop = async (shopId: string) => {
-  console.log("Approving shop:", shopId);
-  // This would be an API call in the real implementation
-  return { success: true };
-};
-
-// Function to delete shop
-const deleteShop = async (shopId: string) => {
-  console.log("Deleting shop:", shopId);
-  // This would be an API call in the real implementation
-  return { success: true };
-};
-
-// Function to update shop
-const updateShop = async (shopId: string, shopData: Shop, userId: string) => {
-  console.log("Updating shop:", shopId, shopData);
-  // This would be an API call in the real implementation
-  return { success: true };
-};
 
 export default function ShopsPage() {
   const { toast } = useToast();
@@ -254,6 +236,31 @@ export default function ShopsPage() {
     }
   }, [filterApproval, filterHasRecipes, isAuthorized, isCheckingAuth]);
 
+  // Function to approve shop
+  const handleShopApproval = async (shopId: string, userId: string) => {
+    try {
+      const result = await approveShop(shopId, userId);
+      if (result.success) {
+        setShops((prev) =>
+          prev.map((shop) =>
+            shop._id === shopId ? { ...shop, isApproved: true } : shop
+          )
+        );
+        toast({
+          title: "Success",
+          description: "Shop approved successfully",
+        });
+      }
+    } catch (error) {
+      console.error("Failed to approve shop:", error);
+      toast({
+        title: "Error",
+        description: "Failed to approve shop. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   // Handle form input changes
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -389,9 +396,9 @@ export default function ShopsPage() {
   };
 
   // Handle approve shop
-  const handleApproveShop = async (shopId: string) => {
+  const handleApproveShop = async (shopId: string, userId: string) => {
     try {
-      await approveShop(shopId);
+      await approveShop(shopId, userId);
       setShops((prev) =>
         prev.map((shop) =>
           shop._id === shopId ? { ...shop, isApproved: true } : shop
@@ -714,10 +721,11 @@ export default function ShopsPage() {
                     onViewShop={handleViewShop}
                     onEditShop={handleEditShop}
                     onDeleteShop={handleDeleteShop}
-                    onApproveShop={handleApproveShop}
+                    onApproveShop={handleShopApproval}
                     formatDate={formatDate}
                     showRecipes={true}
                     showCreated={true}
+                    userId={userId || ""}
                   />
                 </CardContent>
               </Card>
@@ -744,6 +752,7 @@ export default function ShopsPage() {
                     showRecipes={false}
                     showCreated={true}
                     emptyMessage="No pending shops to approve."
+                    userId={userId || ""}
                   />
                 </CardContent>
               </Card>
@@ -770,6 +779,7 @@ export default function ShopsPage() {
                     showRecipes={true}
                     showCreated={false}
                     emptyMessage="No approved shops found."
+                    userId={userId || ""}
                   />
                 </CardContent>
               </Card>
@@ -796,6 +806,7 @@ export default function ShopsPage() {
                     showRecipes={true}
                     showCreated={false}
                     emptyMessage="No shops with recipes found."
+                    userId={userId || ""}
                   />
                 </CardContent>
               </Card>
@@ -816,10 +827,11 @@ export default function ShopsPage() {
               )}
               <DialogFooter className="flex justify-between gap-2">
                 <div>
-                  {selectedShop && !selectedShop.isApproved && (
+                  {selectedShop && !selectedShop.isApproved && userId && (
                     <Button
                       onClick={() =>
-                        selectedShop._id && handleApproveShop(selectedShop._id)
+                        selectedShop._id &&
+                        handleShopApproval(selectedShop._id, userId)
                       }
                       className="mr-2"
                     >

@@ -16,7 +16,6 @@ export async function signupUser(userData: User) {
     if (!response) {
       throw new Error(data.error || "Failed to sign up");
     }
-    console.log("Signup response:", data);
     if (data.success) {
       await createActivityLog(
         data.data._id,

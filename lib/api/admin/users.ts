@@ -1,4 +1,5 @@
 import { User } from "@/lib/types/user";
+import { createActivityLog } from "../activitylog";
 
 export async function fetchUsers() {
   try {
@@ -58,6 +59,17 @@ export async function updateUser(userId: string, userData: User) {
     }
 
     const data = await response.json();
+    if (data.success) {
+      await createActivityLog(
+        data.data._id,
+        userData.name,
+        "verify",
+        "User verified",
+        "user",
+        userData.name + " verified",
+        data.data._id
+      );
+    }
     return data;
   } catch (error) {
     console.error("Error updating user:", error);
@@ -113,7 +125,7 @@ export async function approveUser(userId: string) {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ status: 'verified' }),
+      body: JSON.stringify({ status: "verified" }),
     });
 
     if (!response.ok) {

@@ -97,15 +97,15 @@ export async function createShop(shopData: Shop, userId: string) {
       }
     }
     if (response.status === 200) {
-      await createActivityLog({
-        user: userId,
-        userName: shopData.shopName,
-        actionType: "pending",
-        detail: `New shop registration`,
-        entityType: "shop",
-        entityName: shopData.shopName + " requested approval",
-        entityId: createdShop._id,
-      });
+      await createActivityLog(
+        userId,
+        shopData.shopName,
+        "pending",
+        `New shop registration`,
+        "shop",
+        shopData.shopName + " requested approval",
+        createdShop._id
+      );
     }
 
     return createdShop;
@@ -140,15 +140,15 @@ export async function updateShop(
     }
     const data = await response.json();
     if (response.status === 200) {
-      await createActivityLog({
-        user: userId,
-        userName: shopData.shopName,
-        actionType: "update",
-        detail: `Changed business information`,
-        entityType: "shop",
-        entityName: shopData.shopName + " updated information",
-        entityId: data.data._id,
-      });
+      await createActivityLog(
+        userId,
+        shopData.shopName,
+        "update",
+        `Changed business information`,
+        "shop",
+        shopData.shopName + " updated information",
+        data.data._id
+      );
     }
 
     return data.success ? data.data : null;

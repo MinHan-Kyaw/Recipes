@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import {
   Users,
@@ -16,13 +16,14 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useAuth } from "@/components/AuthProvider";
 import { fetchUsersCount } from "@/lib/api/admin/users";
 import { fetchShopsCount } from "@/lib/api/admin/shops";
 import { fetchRecipeCounts } from "@/lib/api/admin/recipes";
 import { useRouter } from "next/navigation";
 import Sidebar from "./SideBar";
 import Cookies from "js-cookie";
+import { ActivityLog } from "@/lib/types/activitylog";
+import fetchActivityLogs from "@/lib/api/admin/activitylog";
 
 export default function AdminDashboard() {
   const [stats, setStats] = useState({
@@ -33,8 +34,19 @@ export default function AdminDashboard() {
     totalRecipes: 0,
     newRecipesToday: 0,
   });
+
+  const [activityLogs, setActivityLogs] = useState<{
+    users: ActivityLog[];
+    shops: ActivityLog[];
+    recipes: ActivityLog[];
+  }>({
+    users: [],
+    shops: [],
+    recipes: [],
+  });
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
@@ -78,48 +90,48 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     if (!isAuthorized || isCheckingAuth) return;
-    const getUserCount = async () => {
+
+    const fetchData = async () => {
+      setIsLoading(true);
       try {
-        const response = await fetchUsersCount();
-        const data = response.data;
-        setStats((prevStats) => ({
-          ...prevStats,
-          totalUsers: data.totalCount,
-          pendingApprovals: data.unverifiedCount,
-        }));
+        // Fetch stats data
+        const [userCountResponse, shopCountResponse, recipeCountResponse] =
+          await Promise.all([
+            fetchUsersCount(),
+            fetchShopsCount(),
+            fetchRecipeCounts(),
+          ]);
+
+        setStats({
+          totalUsers: userCountResponse.data.totalCount,
+          pendingApprovals: userCountResponse.data.unverifiedCount,
+          totalShops: shopCountResponse.data.totalCount,
+          pendingShops: shopCountResponse.data.notApprovedCount,
+          totalRecipes: recipeCountResponse.data.totalCount,
+          newRecipesToday: recipeCountResponse.data.todayCreatedCount,
+        });
+
+        // Fetch activity logs
+        const [userLogsResponse, shopLogsResponse, recipeLogsResponse] =
+          await Promise.all([
+            fetchActivityLogs("user", 5),
+            fetchActivityLogs("shop", 5),
+            fetchActivityLogs("recipe", 5),
+          ]);
+
+        setActivityLogs({
+          users: userLogsResponse.data,
+          shops: shopLogsResponse.data,
+          recipes: recipeLogsResponse.data,
+        });
       } catch (error) {
-        console.error("Error fetching user count:", error);
+        console.error("Error fetching dashboard data:", error);
+      } finally {
+        setIsLoading(false);
       }
     };
-    const getShopCount = async () => {
-      try {
-        const response = await fetchShopsCount();
-        const data = response.data;
-        setStats((prevStats) => ({
-          ...prevStats,
-          totalShops: data.totalCount,
-          pendingShops: data.notApprovedCount,
-        }));
-      } catch (error) {
-        console.error("Error fetching shop count:", error);
-      }
-    };
-    const getRecipeCount = async () => {
-      try {
-        const response = await fetchRecipeCounts();
-        const data = response.data;
-        setStats((prevStats) => ({
-          ...prevStats,
-          totalRecipes: data.totalCount,
-          newRecipesToday: data.todayCreatedCount,
-        }));
-      } catch (error) {
-        console.error("Error fetching recipe count:", error);
-      }
-    };
-    getRecipeCount();
-    getShopCount();
-    getUserCount();
+
+    fetchData();
   }, [isAuthorized, isCheckingAuth]);
 
   // Show loading state while checking authorization
@@ -154,28 +166,6 @@ export default function AdminDashboard() {
                 <Input placeholder="Search..." className="pl-8" />
               </div>
             </div>
-            {/* <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2">
-                <Avatar className="h-8 w-8">
-                  <AvatarImage
-                    src={user?.avatar || ""}
-                    alt={user?.name || ""}
-                    className="object-cover"
-                  />
-                  <AvatarFallback className="bg-primary text-primary-foreground font-medium">
-                    {getInitial(user?.name || "")}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="hidden md:block w-28 truncate">
-                  <p className="text-sm font-medium text-nowrap overflow-hidden text-ellipsis">
-                    {user?.name || ""}
-                  </p>
-                </div>
-              </div>
-              <Button variant="ghost" size="icon" onClick={logout}>
-                <LogOut className="h-5 w-5" />
-              </Button>
-            </div> */}
           </div>
         </header>
 
@@ -305,76 +295,75 @@ export default function AdminDashboard() {
                     </TabsList>
 
                     <TabsContent value="users" className="space-y-4 mt-4">
-                      <ActivityItem
-                        avatar="/avatars/user1.png"
-                        fallback="JD"
-                        title="John Doe registered"
-                        description="New user registration"
-                        time="10 minutes ago"
-                        status="pending"
-                      />
-                      <ActivityItem
-                        avatar="/avatars/user2.png"
-                        fallback="AS"
-                        title="Alice Smith updated profile"
-                        description="Changed contact information"
-                        time="1 hour ago"
-                        status="completed"
-                      />
-                      <ActivityItem
-                        avatar="/avatars/user3.png"
-                        fallback="RJ"
-                        title="Robert Johnson"
-                        description="Account verification requested"
-                        time="3 hours ago"
-                        status="pending"
-                      />
-                      <ActivityItem
-                        avatar="/avatars/user4.png"
-                        fallback="ML"
-                        title="Maria Lopez"
-                        description="Changed password"
-                        time="5 hours ago"
-                        status="completed"
-                      />
+                      {isLoading ? (
+                        <p className="text-sm text-gray-500">
+                          Loading activity logs...
+                        </p>
+                      ) : activityLogs.users.length === 0 ? (
+                        <p className="text-sm text-gray-500">
+                          No recent user activity
+                        </p>
+                      ) : (
+                        activityLogs.users.map((log) => (
+                          <ActivityItem
+                            key={log._id}
+                            avatar={`/api/placeholder/40/40`}
+                            fallback={getInitials(log.userName)}
+                            title={log.entityName}
+                            description={log.detail}
+                            time={formatTimestamp(log.timestamp || new Date())}
+                            status={getStatusFromAction(log.actionType)}
+                          />
+                        ))
+                      )}
                     </TabsContent>
 
                     <TabsContent value="shops" className="space-y-4 mt-4">
-                      <ActivityItem
-                        avatar="/shops/shop1.png"
-                        fallback="TS"
-                        title="The Spice Market requested approval"
-                        description="New shop registration"
-                        time="2 hours ago"
-                        status="pending"
-                      />
-                      <ActivityItem
-                        avatar="/shops/shop2.png"
-                        fallback="BK"
-                        title="Bakery Kings updated information"
-                        description="Changed business hours"
-                        time="4 hours ago"
-                        status="completed"
-                      />
+                      {isLoading ? (
+                        <p className="text-sm text-gray-500">
+                          Loading activity logs...
+                        </p>
+                      ) : activityLogs.shops.length === 0 ? (
+                        <p className="text-sm text-gray-500">
+                          No recent shop activity
+                        </p>
+                      ) : (
+                        activityLogs.shops.map((log) => (
+                          <ActivityItem
+                            key={log._id}
+                            avatar={`/api/placeholder/40/40`}
+                            fallback={getInitials(log.entityName)}
+                            title={log.entityName}
+                            description={log.detail}
+                            time={formatTimestamp(log.timestamp || new Date())}
+                            status={getStatusFromAction(log.actionType)}
+                          />
+                        ))
+                      )}
                     </TabsContent>
 
                     <TabsContent value="recipes" className="space-y-4 mt-4">
-                      <ActivityItem
-                        avatar="/recipes/recipe1.png"
-                        fallback="PC"
-                        title="Pasta Carbonara"
-                        description="New recipe published by John Doe"
-                        time="30 minutes ago"
-                        status="completed"
-                      />
-                      <ActivityItem
-                        avatar="/recipes/recipe2.png"
-                        fallback="VE"
-                        title="Vegetable Enchiladas"
-                        description="Recipe updated by Maria Lopez"
-                        time="2 hours ago"
-                        status="completed"
-                      />
+                      {isLoading ? (
+                        <p className="text-sm text-gray-500">
+                          Loading activity logs...
+                        </p>
+                      ) : activityLogs.recipes.length === 0 ? (
+                        <p className="text-sm text-gray-500">
+                          No recent recipe activity
+                        </p>
+                      ) : (
+                        activityLogs.recipes.map((log) => (
+                          <ActivityItem
+                            key={log._id}
+                            avatar={`/api/placeholder/40/40`}
+                            fallback={getInitials(log.entityName)}
+                            title={log.entityName}
+                            description={log.detail}
+                            time={formatTimestamp(log.timestamp || new Date())}
+                            status={getStatusFromAction(log.actionType)}
+                          />
+                        ))
+                      )}
                     </TabsContent>
                   </Tabs>
                 </CardContent>
@@ -416,6 +405,52 @@ export default function AdminDashboard() {
       </div>
     </div>
   );
+}
+
+// Helper functions
+function getInitials(name: string) {
+  if (!name) return "??";
+  return name
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
+}
+
+function formatTimestamp(timestamp: Date | string) {
+  const date = new Date(timestamp);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffMins = Math.floor(diffMs / (1000 * 60));
+  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+  if (diffMins < 60)
+    return `${diffMins} minute${diffMins !== 1 ? "s" : ""} ago`;
+  if (diffHours < 24)
+    return `${diffHours} hour${diffHours !== 1 ? "s" : ""} ago`;
+  if (diffDays < 30) return `${diffDays} day${diffDays !== 1 ? "s" : ""} ago`;
+
+  return date.toLocaleDateString();
+}
+
+function getStatusFromAction(actionType: string): "pending" | "completed" {
+  switch (actionType) {
+    case "pending":
+      return "pending";
+    case "approve":
+      return "completed";
+    case "create":
+    case "update":
+    case "delete":
+      return "completed";
+    case "register":
+    case "login":
+      return "completed";
+    default:
+      return "completed";
+  }
 }
 
 interface ActivityItemProps {

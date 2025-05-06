@@ -1,5 +1,3 @@
-import { ActivityLog } from "../types/activitylog";
-
 export async function createActivityLog(
   user: string,
   userName: string,

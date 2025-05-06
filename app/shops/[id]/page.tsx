@@ -26,6 +26,7 @@ import { Shop } from "@/lib/types/shop";
 import { Recipe } from "@/lib/types/recipe";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { fetchShopRecipes } from "@/lib/api/recipes";
+import { fetchShopById } from "@/lib/api/shops";
 
 export default function ShopDetailPage() {
   const { id } = useParams();
@@ -41,12 +42,11 @@ export default function ShopDetailPage() {
       setError(null);
 
       try {
-        const response = await fetch(`/api/shops/${id}`);
-        if (!response.ok) {
+        const result = await fetchShopById(id as string);
+        if (!result) {
           throw new Error("Failed to fetch shop details");
         }
-        const data = await response.json();
-        setShop(data.data);
+        setShop(result);
 
         // Fetch a limited number of recipes for preview
         const shopRecipes = await fetchShopRecipes(id as string, { limit: 3 });

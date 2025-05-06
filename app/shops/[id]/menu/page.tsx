@@ -53,6 +53,7 @@ import { Separator } from "@/components/ui/separator";
 import { Recipe } from "@/lib/types/recipe";
 import { Shop } from "@/lib/types/shop";
 import { fetchShopRecipes } from "@/lib/api/recipes";
+import { fetchShopById } from "@/lib/api/shops";
 
 export default function ShopMenuPage() {
   const { id } = useParams();
@@ -77,12 +78,11 @@ export default function ShopMenuPage() {
 
       try {
         // Fetch shop details
-        const shopResponse = await fetch(`/api/shops/${id}`);
-        if (!shopResponse.ok) {
+        const result = await fetchShopById(id as string);
+        if (!result) {
           throw new Error("Failed to fetch shop details");
         }
-        const shopData = await shopResponse.json();
-        setShop(shopData.data);
+        setShop(result);
 
         // Fetch shop recipes
         const shopRecipes = await fetchShopRecipes(id as string);

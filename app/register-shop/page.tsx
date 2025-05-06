@@ -13,6 +13,7 @@ import { Shop } from "@/lib/types/shop";
 import Cookies from "js-cookie";
 import CountrySelector from "@/components/CountrySelector";
 import MapSelector from "@/components/MapSelector";
+import { createShop } from "@/lib/api/shops";
 
 export default function RegisterShop() {
   const router = useRouter();
@@ -183,18 +184,9 @@ export default function RegisterShop() {
         logo: logoData,
         owner: userId,
       };
+      const result = await createShop(finalFormData, userId);
 
-      const response = await fetch("/api/shops", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(finalFormData),
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
+      if (!result) {
         throw new Error(result.error || "Failed to register shop");
       }
 

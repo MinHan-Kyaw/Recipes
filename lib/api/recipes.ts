@@ -29,15 +29,15 @@ export async function createRecipe(recipeData: Recipe, userId: string) {
     });
     const data = await response.json();
     if (response.status === 200) {
-      await createActivityLog({
-        user: userId,
-        userName: recipeData.author?.name || "Unknown",
-        actionType: "create",
-        detail: "New recipe published by " + recipeData.author,
-        entityType: "recipe",
-        entityName: recipeData.title,
-        entityId: data.data._id,
-      });
+      await createActivityLog(
+        userId,
+        recipeData.author?.name || "Unknown",
+        "create",
+        "New recipe published by " + recipeData.author,
+        "recipe",
+        recipeData.title,
+        data.data._id
+      );
     }
 
     if (!response.ok) {

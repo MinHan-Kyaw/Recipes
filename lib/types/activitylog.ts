@@ -7,5 +7,5 @@ export interface ActivityLog {
   entityId: string;
   entityName: string;
   detail: string;
-  ipAddress?: string;
+  timestamp?: string;
 }

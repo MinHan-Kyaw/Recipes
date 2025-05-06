@@ -18,11 +18,12 @@ interface ShopTableProps {
   onViewShop: (shop: Shop) => void;
   onEditShop: (shop: Shop) => void;
   onDeleteShop: (shop: Shop) => void;
-  onApproveShop: (shopId: string) => void;
+  onApproveShop: (shopId: string, userId: string) => void;
   formatDate: (date: string | Date) => string;
   showRecipes?: boolean;
   showCreated?: boolean;
   emptyMessage?: string;
+  userId?: string;
 }
 
 export default function ShopTable({
@@ -42,6 +43,7 @@ export default function ShopTable({
   showRecipes = true,
   showCreated = true,
   emptyMessage = "No shops found matching your filters.",
+  userId,
 }: ShopTableProps): JSX.Element {
   const getShopInitials = (name: string) => {
     if (!name) return "";
@@ -127,7 +129,9 @@ export default function ShopTable({
               </Button>
               <Button
                 size="sm"
-                onClick={() => shop._id && onApproveShop(shop._id)}
+                onClick={() =>
+                  shop._id && userId && onApproveShop(shop._id, userId)
+                }
               >
                 <CheckCircle className="h-4 w-4" />
               </Button>
