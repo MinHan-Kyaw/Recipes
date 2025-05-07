@@ -12,26 +12,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { motion } from "framer-motion";
 import { fetchAllShops, fetchShopsWithCoordinates } from "@/lib/api/shops";
 
-interface Shop {
-  _id: string;
-  shopName: string;
-  description: string;
-  address: string;
-  city: string;
-  state: string;
-  zipCode: string;
-  country: string;
-  businessHours: string;
-  categories: string[];
-  logo: {
-    url: string;
-    filename: string;
-  };
-  location: {
-    lat: number;
-    lng: number;
-  };
-  distance: number;
+import { Shop as ShopType } from "@/lib/types/shop";
+
+interface Shop extends ShopType {
+  distance?: number;
 }
 
 export default function ShopsPage() {
@@ -44,6 +28,8 @@ export default function ShopsPage() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [allCategories, setAllCategories] = useState<string[]>([]);
   const [locationDenied, setLocationDenied] = useState(false);
+  const [viewAllShops, setViewAllShops] = useState(false);
+  const viewAllShopsRef = useRef(false);
 
   useEffect(() => {
     // Get user's current location
@@ -100,6 +86,7 @@ export default function ShopsPage() {
     try {
       let data;
       if (
+        viewAllShopsRef.current ||
         locationDenied ||
         (currentLocation.lat === 0 && currentLocation.lng === 0)
       ) {
@@ -111,7 +98,29 @@ export default function ShopsPage() {
         );
       }
 
-      setShops(data);
+      if (data) {
+        // Calculate distance for each shop if location is available
+        const shopsWithDistance = data.map((shop: Shop) => {
+          let distance = undefined;
+          if (
+            currentLocation.lat !== 0 &&
+            currentLocation.lng !== 0 &&
+            shop.location &&
+            shop.location.lat &&
+            shop.location.lng
+          ) {
+            distance = calculateDistance(
+              currentLocation.lat,
+              currentLocation.lng,
+              shop.location.lat,
+              shop.location.lng
+            );
+          }
+          return { ...shop, distance };
+        });
+
+        setShops(shopsWithDistance);
+      }
 
       // Extract all unique categories
       const categories = data.flatMap((shop: Shop) => shop.categories || []);
@@ -122,34 +131,42 @@ export default function ShopsPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [currentLocation, locationDenied]);
+  }, [currentLocation, locationDenied, viewAllShops]);
 
   useEffect(() => {
     // Fetch shops when location is available and has changed significantly
-    if (mapLoaded && currentLocation.lat !== 0 && currentLocation.lng !== 0) {
-      // Store the last fetched location in a ref to avoid unnecessary fetches
+    if (mapLoaded) {
       if (
-        !lastFetchedLocationRef.current ||
-        calculateDistance(
-          lastFetchedLocationRef.current.lat,
-          lastFetchedLocationRef.current.lng,
-          currentLocation.lat,
-          currentLocation.lng
-        ) > 0.05
+        !viewAllShops &&
+        currentLocation.lat !== 0 &&
+        currentLocation.lng !== 0
       ) {
-        // Only fetch if moved more than 50 meters
-        lastFetchedLocationRef.current = { ...currentLocation };
+        // Store the last fetched location in a ref to avoid unnecessary fetches
+        if (
+          !lastFetchedLocationRef.current ||
+          calculateDistance(
+            lastFetchedLocationRef.current.lat,
+            lastFetchedLocationRef.current.lng,
+            currentLocation.lat,
+            currentLocation.lng
+          ) > 0.05
+        ) {
+          // Only fetch if moved more than 50 meters
+          lastFetchedLocationRef.current = { ...currentLocation };
+          fetchShops();
+        }
+      } else {
+        // Fetch all shops if viewAllShops is true or location is not available
         fetchShops();
       }
     }
-    fetchShops();
   }, [
     mapLoaded,
     currentLocation.lat,
     currentLocation.lng,
-    currentLocation,
     calculateDistance,
     fetchShops,
+    viewAllShops,
   ]);
 
   const handleLocationChange = useCallback(
@@ -257,6 +274,7 @@ export default function ShopsPage() {
                 initialPosition={currentLocation}
                 onLocationChange={handleLocationChange}
                 useCurrentLocation={true}
+                shops={filteredShops}
               />
             ) : (
               <div className="h-full flex items-center justify-center bg-gray-100">
@@ -326,30 +344,45 @@ export default function ShopsPage() {
             ) : (
               <div>
                 <p className="text-sm text-gray-500 mb-4">
-                  Showing shops near:
-                  <br />
-                  Lat: {currentLocation.lat.toFixed(6)}
-                  <br />
-                  Lng: {currentLocation.lng.toFixed(6)}
+                  {viewAllShops
+                    ? "Showing all shops regardless of location"
+                    : `Showing shops near:\nLat: ${currentLocation.lat.toFixed(
+                        6
+                      )}\nLng: ${currentLocation.lng.toFixed(6)}`}
                 </p>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-full"
-                  onClick={() => {
-                    if (navigator.geolocation) {
-                      navigator.geolocation.getCurrentPosition((position) => {
-                        setCurrentLocation({
-                          lat: position.coords.latitude,
-                          lng: position.coords.longitude,
-                        });
-                      });
-                    }
-                  }}
-                >
-                  <MapPin className="w-4 h-4 mr-2" />
-                  Reset to Current Location
-                </Button>
+                <div className="space-y-2">
+                  <Button
+                    variant={viewAllShops ? "outline" : "default"}
+                    size="sm"
+                    className="w-full mb-2"
+                    onClick={() => {
+                      // Update both state and ref
+                      viewAllShopsRef.current = false;
+                      setViewAllShops(false);
+                      // Call fetchShops after a short timeout to ensure state is processed
+                      setTimeout(() => fetchShops(), 10);
+                    }}
+                  >
+                    <MapPin className="w-4 h-4 mr-2" />
+                    Show Nearby Shops
+                  </Button>
+
+                  <Button
+                    variant={viewAllShops ? "default" : "outline"}
+                    size="sm"
+                    className="w-full"
+                    onClick={() => {
+                      // Update both state and ref
+                      viewAllShopsRef.current = true;
+                      setViewAllShops(true);
+                      // Call fetchShops after a short timeout to ensure state is processed
+                      setTimeout(() => fetchShops(), 10);
+                    }}
+                  >
+                    <Store className="w-4 h-4 mr-2" />
+                    View All Shops
+                  </Button>
+                </div>
               </div>
             )}
           </div>

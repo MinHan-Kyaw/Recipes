@@ -1,5 +1,10 @@
 import React, { useEffect, useState, useRef, useCallback } from "react";
 import { Loader } from "lucide-react";
+import { Shop as ShopType } from "@/lib/types/shop";
+
+interface Shop extends ShopType {
+  distance?: number;
+}
 
 declare global {
   interface Window {
@@ -14,6 +19,7 @@ interface MapSelectorProps {
   onLocationChange: (lat: number, lng: number) => void;
   useCurrentLocation?: boolean;
   viewOnly?: boolean;
+  shops?: Shop[];
 }
 
 const MapSelector: React.FC<MapSelectorProps> = ({
@@ -21,6 +27,7 @@ const MapSelector: React.FC<MapSelectorProps> = ({
   onLocationChange,
   useCurrentLocation = true,
   viewOnly = false,
+  shops = [],
 }) => {
   const mapRef = useRef<HTMLDivElement>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -32,6 +39,8 @@ const MapSelector: React.FC<MapSelectorProps> = ({
 
   // Store current position state
   const [currentPosition, setCurrentPosition] = useState(initialPosition);
+  const [shopMarkers, setShopMarkers] = useState<any[]>([]);
+  const currentInfoWindow = useRef<any>(null);
 
   // Use refs to break dependency cycles
   const onLocationChangeRef = useRef(onLocationChange);
@@ -84,6 +93,67 @@ const MapSelector: React.FC<MapSelectorProps> = ({
     }
   }, []);
 
+  useEffect(() => {
+    if (!mapInstance || !shops) return;
+
+    // Clear existing shop markers
+    shopMarkers.forEach((marker) => marker.setMap(null));
+    setShopMarkers([]);
+
+    // Add new markers
+    const newMarkers: any[] = [];
+
+    shops.forEach((shop) => {
+      if (shop.location && shop.location.lat && shop.location.lng) {
+        const shopMarker = new window.google.maps.Marker({
+          position: {
+            lat: shop.location.lat,
+            lng: shop.location.lng,
+          },
+          map: mapInstance,
+          title: shop.shopName,
+          icon: {
+            url: "https://maps.google.com/mapfiles/ms/icons/blue-dot.png",
+          },
+        });
+
+        const infoWindow = new window.google.maps.InfoWindow({
+          content: `
+            <div style="padding: 8px; max-width: 200px;">
+              <h3 style="font-weight: bold; margin-bottom: 5px;">${
+                shop.shopName
+              }</h3>
+              <p style="font-size: 12px; margin-bottom: 5px;">${
+                shop.address
+              }, ${shop.city}</p>
+              ${
+                shop.distance !== undefined
+                  ? `<p style="font-size: 12px;">${
+                      shop.distance < 1
+                        ? `${(shop.distance * 1000).toFixed(0)}m away`
+                        : `${shop.distance.toFixed(1)}km away`
+                    }</p>`
+                  : ""
+              }
+            </div>
+          `,
+        });
+
+        shopMarker.addListener("click", () => {
+          if (currentInfoWindow.current) {
+            currentInfoWindow.current.close();
+          }
+          infoWindow.open(mapInstance, shopMarker);
+          currentInfoWindow.current = infoWindow;
+        });
+
+        newMarkers.push(shopMarker);
+      }
+    });
+
+    setShopMarkers(newMarkers);
+  }, [mapInstance, shops]);
+
   // Load Google Maps script - improved loading logic
   useEffect(() => {
     // Check if Google Maps is already loaded and ready to use
@@ -91,7 +161,7 @@ const MapSelector: React.FC<MapSelectorProps> = ({
       setGoogleLoaded(true);
       return;
     }
-    
+
     const googleMapCallback = "initGoogleMapsCallback";
 
     // Create a global callback function
@@ -106,7 +176,7 @@ const MapSelector: React.FC<MapSelectorProps> = ({
     const existingScript = document.querySelector(
       `script[src*="maps.googleapis.com/maps/api/js"]`
     );
-    
+
     if (existingScript) {
       // If script exists but Google isn't loaded, wait for it
       if (!window.google || !window.google.maps || !window.google.maps.Map) {
@@ -157,7 +227,7 @@ const MapSelector: React.FC<MapSelectorProps> = ({
 
     const initializeMap = async () => {
       if (isMapInitialized || !mapRef.current) return;
-      
+
       try {
         // Double check that Google Maps is fully loaded
         if (!window.google || !window.google.maps || !window.google.maps.Map) {
@@ -215,6 +285,61 @@ const MapSelector: React.FC<MapSelectorProps> = ({
         });
 
         setMarker(markerObj);
+        // Add markers for shops if available
+        if (shops && shops.length > 0) {
+          shops.forEach((shop) => {
+            if (shop.location && shop.location.lat && shop.location.lng) {
+              // Create marker for each shop
+              const shopMarker = new window.google.maps.Marker({
+                position: {
+                  lat: shop.location.lat,
+                  lng: shop.location.lng,
+                },
+                map: mapObj,
+                title: shop.shopName,
+                icon: {
+                  url: "https://maps.google.com/mapfiles/ms/icons/blue-dot.png",
+                },
+              });
+
+              // Create info window for shop details
+              const infoWindow = new window.google.maps.InfoWindow({
+                content: `
+                  <div style="padding: 8px; max-width: 200px;">
+                    <h3 style="font-weight: bold; margin-bottom: 5px;">${
+                      shop.shopName
+                    }</h3>
+                    <p style="font-size: 12px; margin-bottom: 5px;">${
+                      shop.address
+                    }, ${shop.city}</p>
+                    ${
+                      shop.distance !== undefined
+                        ? `<p style="font-size: 12px;">${
+                            shop.distance < 1
+                              ? `${(shop.distance * 1000).toFixed(0)}m away`
+                              : `${shop.distance.toFixed(1)}km away`
+                          }</p>`
+                        : ""
+                    }
+                  </div>
+                `,
+              });
+
+              // Add click listener to show info window
+              shopMarker.addListener("click", () => {
+                // Close any open info windows
+                if (currentInfoWindow.current) {
+                  currentInfoWindow.current.close();
+                }
+                infoWindow.open(mapObj, shopMarker);
+                currentInfoWindow.current = infoWindow;
+              });
+
+              // Store the markers for potential cleanup
+              shopMarkers.push(shopMarker);
+            }
+          });
+        }
 
         // Only add interactive features if not in viewOnly mode
         if (!viewOnly) {
@@ -366,6 +491,10 @@ const MapSelector: React.FC<MapSelectorProps> = ({
 
     return () => {
       isMapInitialized = true;
+      // Clean up shop markers
+      shopMarkers.forEach((marker) => {
+        if (marker) marker.setMap(null);
+      });
     };
   }, [
     googleLoaded,
@@ -405,7 +534,14 @@ const MapSelector: React.FC<MapSelectorProps> = ({
       }
       return prevPosition;
     });
-  }, [initialPosition, mapInstance, marker, mapInitialized, currentPosition.lat, currentPosition.lng]);
+  }, [
+    initialPosition,
+    mapInstance,
+    marker,
+    mapInitialized,
+    currentPosition.lat,
+    currentPosition.lng,
+  ]);
 
   return (
     <div className="relative w-full h-full">
